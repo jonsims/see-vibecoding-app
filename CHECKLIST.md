@@ -1,0 +1,192 @@
+# SEE Vibecoding App — Pre-Workshop Checklist
+
+**Workshop:** Tuesday May 12, 2026 · 3:30–5:00 PM
+**App lives at:** `~/Projects/see-vibecoding-app/`
+**Repo:** https://github.com/jonsims/see-vibecoding-app
+
+Work through Sections A–F to verify everything works. Section G is open decisions you still need to make. Section H is day-of setup.
+
+---
+
+## A. Start the server
+
+If it's not already running:
+
+```bash
+cd ~/Projects/see-vibecoding-app
+node server.js
+```
+
+You should see:
+```
+🌱 SEE Vibecoding running at http://localhost:3011
+```
+
+- [ ] Server boots without errors
+- [ ] `http://localhost:3011/submit` loads in your browser
+- [ ] `http://localhost:3011/admin` loads (asks for PIN)
+- [ ] `http://localhost:3011/display` loads
+
+---
+
+## B. Form flow (try it on your phone)
+
+To open the form on your phone, both devices need to be on the same Wi-Fi. Use:
+
+> **`http://192.168.4.22:3011/submit`**
+
+(If that doesn't work, your Mac's IP may have changed — `ipconfig getifaddr en0` from Terminal to recheck.)
+
+- [ ] Form renders cleanly on phone Safari
+- [ ] All 4 stage buttons (Novice / Curious / Tinkering / Building) tap correctly, subtitle hint visible
+- [ ] All 6 discipline buttons tap correctly
+- [ ] Character counters update as you type your wish + comfort food
+- [ ] "Submit" button briefly shows "Submitting…" then the confirmation appears
+- [ ] Confirmation page shows:
+  - [ ] Green ✓ "You're in."
+  - [ ] "Who's checked in so far" card — your number + horizontal stage bars
+  - [ ] "One small thing before Tuesday" card with `claude.ai/download` link
+  - [ ] Footer: "Babson College · May 12, 2026"
+- [ ] Tapping `claude.ai/download →` opens the Claude download page
+
+---
+
+## C. Admin panel
+
+URL: `http://localhost:3011/admin`
+PIN: `1234` (or whatever's in `.env` — `cat ~/Projects/see-vibecoding-app/.env` if 1234 doesn't work)
+
+- [ ] PIN gate accepts the correct PIN
+- [ ] Wrong PIN shows "Wrong PIN." error
+- [ ] After unlocking, header shows green "connected" dot (top right)
+- [ ] Stats row shows current counts (Submissions / Wishes / Build plans / Food pitches)
+- [ ] Stage distribution bars visible (after at least 1 submission)
+- [ ] Discipline distribution bars visible
+- [ ] Display state buttons highlight the currently-active state
+
+---
+
+## D. Cold-open rehearsal (with test data)
+
+In the admin **Danger zone** at the bottom:
+
+- [ ] Click "Load 50 fake submissions"
+- [ ] Submission count jumps to 50
+- [ ] Stage distribution shows: Tinkering 18 / Curious 14 / Building 10 / Novice 8
+- [ ] All 6 disciplines appear in the discipline distribution
+
+Open `http://localhost:3011/display` in a **second** browser window (or on a second monitor). In the admin panel, click each display state button and verify the projector view:
+
+- [ ] **Collection** — big "50" + QR code + URL
+- [ ] **Stage chart** — gradient bars, Tinkering on top
+- [ ] **Discipline chart** — six bars, Entrepreneurship on top
+- [ ] **Wish wall** — list of 50 raw wishes (will get prettier once you synthesize)
+- [ ] **Sample build plans** — empty placeholder until you curate (next step)
+- [ ] **Food startups 🍕** — empty placeholder until you curate
+
+Now run the synthesis + curation:
+
+- [ ] In "Room-level synthesis," click **Generate** next to "Wish wall" — wait ~5 seconds, status changes to "ready ✓"
+- [ ] Flip display to "Wish wall" — now shows dedup'd wishes with colored theme tags (grading, feedback, planning, etc.)
+- [ ] In **"Curate sample build plans"**, tick 6–8 of the strongest 3-line plans
+- [ ] Click **"Save selection"** — button briefly shows "Saved ✓ (N)"
+- [ ] Flip display to "Sample build plans" — your 6–8 selections appear as green-bordered cards
+- [ ] In **"Curate food startups"**, tick 6–8 of the funniest pitches
+- [ ] Click **"Save selection"**
+- [ ] Flip display to "Food startups 🍕" — your selections appear as gold-bordered cards
+
+---
+
+## E. Readability check
+
+The display will be on a projector. Walk 20–30 feet from your screen (or open the display in full-screen on your laptop and stand across the room):
+
+- [ ] Every display state is readable at 20–30 feet
+- [ ] Charts (stage + discipline) are readable, including labels
+- [ ] Wish-wall text doesn't wrap awkwardly
+- [ ] Food-startup card name + tagline lands at a glance from a distance
+
+---
+
+## F. Wipe before going live
+
+When you're ready to accept real submissions, in **Danger zone**:
+
+- [ ] Click "Wipe & start next session"
+- [ ] Confirm — submission count drops to 0
+- [ ] Curation selections clear
+- [ ] Display flips back to the collection state
+
+(After this, real registrants' submissions come in fresh.)
+
+---
+
+## G. Open decisions (NOT verification — things you still need to do)
+
+### G1. How will registrants reach the form?
+
+The app is currently local-only. `http://192.168.4.22:3011` only works on your home Wi-Fi. Registrants need a public URL. Three options:
+
+- **Render deploy** (recommended, set up but not connected)
+  1. Push is already done — the repo is at https://github.com/jonsims/see-vibecoding-app
+  2. In Render dashboard, create new web service from that repo
+  3. Add two env vars manually: `ANTHROPIC_API_KEY` (copy from `.env`) and `ADMIN_PIN`
+  4. Deploy — it'll be at `https://see-vibecoding-app.onrender.com`
+- **Cloudflare tunnel** for the day (free, no signup, ephemeral URL):
+  ```bash
+  cloudflared tunnel --url http://localhost:3011 --no-autoupdate
+  ```
+  Share whatever URL it prints. Caveat: the tunnel dies when you close the laptop.
+- **Run on the NAS** — bigger lift, probably not worth it for one event.
+
+- [ ] Decision made: __________________________
+
+### G2. Email the link to registrants
+
+Per the original PRD timeline, this was supposed to go out Saturday May 9. Time is tight — registrants need at least a few hours to fill out the form before Tuesday 3:30.
+
+- [ ] Decided send method (Canvas / email / both)
+- [ ] Public URL inserted into the message
+- [ ] Email sent
+
+### G3. (Optional) HTTPS via Caddy
+
+The Caddy config + entry in the Caddyfile is already in place. To make `https://local.see-vibecoding-app` actually resolve, run once:
+
+```bash
+echo "127.0.0.1 local.see-vibecoding-app" | sudo tee -a /etc/hosts
+```
+
+This is purely cosmetic — `http://localhost:3011` works without it.
+
+- [ ] Done (optional)
+
+---
+
+## H. Tuesday — day-of setup
+
+- [ ] Verify the public URL (from G1) still works — submit one test entry from your phone
+- [ ] If the test entry stuck around in production: admin → **Danger zone → "Wipe & start next session"** to clear stale data before audience arrives
+- [ ] On the presentation laptop: open `/admin` in one browser tab, `/display` in a second tab (drag the display tab to the projector / second screen, fullscreen it with `Cmd+Ctrl+F` in Safari or `Ctrl+Cmd+F` in Chrome)
+- [ ] Test the PIN entry on the actual presentation laptop
+- [ ] Plan your cold-open sequence — likely cycle:
+  1. `collection` (during pre-class intro, while the last stragglers submit)
+  2. `stage_chart` (who's in the room by AI stage)
+  3. `discipline_chart` (who's in the room by discipline)
+  4. `wish_wall` (themed list of wishes)
+  5. `sample_build_plans` (your curated picks)
+  6. `food_startups 🍕` (closer / laugh state)
+
+---
+
+## Quick reference
+
+| Thing | Where |
+| --- | --- |
+| Submit form | http://localhost:3011/submit |
+| Admin | http://localhost:3011/admin (PIN: `1234`) |
+| Display | http://localhost:3011/display |
+| LAN access (phone) | http://192.168.4.22:3011/submit |
+| Code | `~/Projects/see-vibecoding-app/` |
+| Logs (if running in background) | `/tmp/see-vibe.log` |
+| Repo | https://github.com/jonsims/see-vibecoding-app |
