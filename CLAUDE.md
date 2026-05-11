@@ -52,7 +52,7 @@ Each submission is a structured object (not parallel arrays — keeps generated 
 
 Caps: `wish` 100, `comfort_food` 50, total submissions 500.
 
-Stages whitelist: `Skeptic`, `Curious`, `Tinkering`, `Building`.
+Stages whitelist: `Novice`, `Curious`, `Tinkering`, `Building`.
 Disciplines whitelist: `Entrepreneurship`, `Strategy / Management`, `Marketing`, `Finance / Accounting`, `Operations / Tech`, `Other`.
 
 ## The cold open (display states 0–5 minutes)
@@ -60,7 +60,7 @@ Disciplines whitelist: `Entrepreneurship`, `Strategy / Management`, `Marketing`,
 Jon advances via admin. Likely cycle: 4–5 of these in 5 minutes; `food_startups` is the closer/laugh state.
 
 1. `collection` — count + QR (used while still collecting, e.g. day-of stragglers)
-2. `stage_chart` — distribution across Skeptic→Building
+2. `stage_chart` — distribution across Novice→Building
 3. `discipline_chart` — distribution across 6 disciplines
 4. `wish_wall` — dedup'd cluster of `wish` strings, themed
 5. `sample_build_plans` — 5–8 curated per-respondent build plans (anonymized)

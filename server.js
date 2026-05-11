@@ -20,7 +20,7 @@ app.get('/display', (req, res) => res.sendFile(path.join(__dirname, 'public', 'd
 
 // ─── Whitelists ──────────────────────────────────────────────────────────────
 
-const VALID_STAGES = ['Skeptic', 'Curious', 'Tinkering', 'Building'];
+const VALID_STAGES = ['Novice', 'Curious', 'Tinkering', 'Building'];
 const VALID_DISCIPLINES = [
   'Entrepreneurship',
   'Strategy / Management',
@@ -109,7 +109,7 @@ function resetSession() { session = makeEmptySession(); }
 // ─── Fallbacks (used when per-submission synthesis fails) ───────────────────
 
 const FALLBACK_BUILD_PLANS = {
-  Skeptic: {
+  Novice: {
     line1: 'A one-page rubric contradiction checker',
     line2: 'Your existing rubric plus one student paper',
     line3: 'It surfaces a tension you already half-noticed',
@@ -160,7 +160,7 @@ Turn their wish into a 3-line build plan they could actually attempt during the 
 
 Constraints:
 - Total ≤45 words across all 3 lines
-- Match their stage (Skeptics get something tiny; Builders get something ambitious)
+- Match their stage (Novices get something tiny; Builders get something ambitious)
 - Doable in ~35 minutes with dummy data
 - Action verbs only: "build," "draft," "prototype," "design" — not "explore" or "consider"
 - Peer voice, not coach voice

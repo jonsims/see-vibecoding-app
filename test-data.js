@@ -1,13 +1,13 @@
 // 50 fake pre-class submissions for SEE Vibecoding.
 // All buildPlan and startupPitch values are hand-written so /api/admin/load-test-data
 // is instant and doesn't spam the API. Realistic distribution:
-//   Stage: 8 Skeptic / 14 Curious / 18 Tinkering / 10 Building
+//   Stage: 8 Novice / 14 Curious / 18 Tinkering / 10 Building
 //   Discipline: 18 Entrepreneurship / 8 Strategy / 7 Marketing / 6 Finance / 6 Ops-Tech / 5 Other
 
 module.exports = [
-  // ─── Skeptics (8) ─────────────────────────────────────────────────────────
+  // ─── Novices (8) ──────────────────────────────────────────────────────────
   {
-    stage: 'Skeptic', discipline: 'Entrepreneurship',
+    stage: 'Novice', discipline: 'Entrepreneurship',
     teach: "Use AI to draft a discussion prompt then rewrite it in your own voice",
     wish: "Tell me when student work is genuinely original, not just pattern-matched",
     question: "How do I assess actual learning when AI can do most assignments better than novices?",
@@ -17,7 +17,7 @@ module.exports = [
     startupPitch: { name: "Bittermind", tagline: "The espresso-pulled productivity stack.", pitch: "AI-curated dark chocolate pairings calibrated to your cortisol curve. We're the only TAM-defining player in the morning-bitterness vertical, with an unfair moat in cocoa percentage data." },
   },
   {
-    stage: 'Skeptic', discipline: 'Strategy / Management',
+    stage: 'Novice', discipline: 'Strategy / Management',
     teach: "Ask AI for three counter-arguments to your strategy case before class",
     wish: "Honestly tell me when my case analysis is shallow",
     question: "Is the speed gain from AI making me a worse thinker over time?",
@@ -27,7 +27,7 @@ module.exports = [
     startupPitch: { name: "Crustco", tagline: "Toast, but venture-backed.", pitch: "AI-optimized bread firmness using sensor-laden butter knives. TAM is everyone who's ever made toast. Series A coming once we figure out unit economics on jam." },
   },
   {
-    stage: 'Skeptic', discipline: 'Finance / Accounting',
+    stage: 'Novice', discipline: 'Finance / Accounting',
     teach: "Have AI explain a confusing balance sheet to you in plain English first",
     wish: "Catch the moment a student copy-pastes my finance question into ChatGPT",
     question: "How do I teach financial intuition if AI does the calculation for them?",
@@ -37,7 +37,7 @@ module.exports = [
     startupPitch: { name: "NocturnOat", tagline: "Cereal for the post-rational hours.", pitch: "AI-personalized 10pm bowls calibrated to your unprocessed regrets. The dairy-disrupting moat is real; the milk-to-flake ratio is our Series A pitch." },
   },
   {
-    stage: 'Skeptic', discipline: 'Marketing',
+    stage: 'Novice', discipline: 'Marketing',
     teach: "Use AI as a brainstorming sparring partner, not a copy generator",
     wish: "Push back when my marketing brief is actually just buzzwords",
     question: "Will AI-generated marketing examples make students worse at noticing real human insight?",
@@ -47,7 +47,7 @@ module.exports = [
     startupPitch: { name: "Slabd", tagline: "Cold pizza, vertically integrated.", pitch: "AI predicts which slice you'll regret most at 3am and pre-stages it in your fridge. TAM is anyone with shame and a Wednesday night." },
   },
   {
-    stage: 'Skeptic', discipline: 'Operations / Tech',
+    stage: 'Novice', discipline: 'Operations / Tech',
     teach: "Ask AI to walk through the failure modes of any system you teach about",
     wish: "Tell me what AI is genuinely bad at, not just what it wants me to think",
     question: "What's a use case where AI is clearly worse than a beginner human?",
@@ -57,7 +57,7 @@ module.exports = [
     startupPitch: { name: "Yolkflow", tagline: "Ramen as a Service.", pitch: "AI optimizes egg-drop timing using webcam vision and your circadian data. Our defensible moat is the broth-fermentation graph database. Pre-seed open." },
   },
   {
-    stage: 'Skeptic', discipline: 'Entrepreneurship',
+    stage: 'Novice', discipline: 'Entrepreneurship',
     teach: "Have AI play your pitch judge before you actually pitch",
     wish: "Tell me when a student's startup idea is already done — and by whom",
     question: "Are we accelerating undergrads into AI-shaped business ideas that aren't theirs?",
@@ -67,7 +67,7 @@ module.exports = [
     startupPitch: { name: "Béchamels", tagline: "Mom-grade nostalgia, enterprise-priced.", pitch: "Mac and cheese tuned by AI to the exact emotional state of your 14-year-old self. We own the cheddar-anxiety vertical and the moat smells incredible." },
   },
   {
-    stage: 'Skeptic', discipline: 'Other',
+    stage: 'Novice', discipline: 'Other',
     teach: "Try writing your worst version first, then ask AI what's missing",
     wish: "Actually tell me what I don't know I don't know about my own field",
     question: "How do I keep my expertise sharp when AI lowers the floor for everyone?",
@@ -77,7 +77,7 @@ module.exports = [
     startupPitch: { name: "Soyseed", tagline: "Plain rice, but make it a platform.", pitch: "AI-paired soy sauce subscription matching your minimalism aesthetic. We're disrupting umami; our defensible moat is the fermentation calendar." },
   },
   {
-    stage: 'Skeptic', discipline: 'Strategy / Management',
+    stage: 'Novice', discipline: 'Strategy / Management',
     teach: "Read AI's strategy answer, then ask it what it missed",
     wish: "Stop sounding smart when it's actually wrong",
     question: "How do I teach skepticism of AI without sounding like I hate the tool?",
