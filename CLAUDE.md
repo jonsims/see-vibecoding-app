@@ -31,11 +31,11 @@ npm run dev       # Run with --watch for auto-reload
 Single-file Express server (`server.js`) with all state in memory. No database — data resets on restart.
 
 **Three static pages from `public/`:**
-- `submit.html` — mobile-first form, 7 fields (2 picks + 5 short texts), 75–90s target completion. On submit, runs two synthesis calls in parallel via `Promise.allSettled` (15s combined timeout); returns a personalized 3-line build plan + a silly comfort-food startup pitch.
-- `admin.html` — PIN-protected control panel. 8 display state buttons, 3 room-level synthesis runs, and two curation panels (build plans + food startups).
-- `display.html` — full-screen projector view with 8 states, polls `/api/state` every 2 seconds.
+- `submit.html` — mobile-first form, 4 fields (2 picks + 2 short texts), 30–45s target completion. On submit, runs two synthesis calls in parallel via `Promise.allSettled` (15s combined timeout); returns a personalized 3-line build plan + a silly comfort-food startup pitch.
+- `admin.html` — PIN-protected control panel. 6 display state buttons, 1 room-level synthesis (wish wall), and two curation panels (build plans + food startups).
+- `display.html` — full-screen projector view with 6 states, polls `/api/state` every 2 seconds.
 
-**Valid display states (8):** `collection`, `stage_chart`, `discipline_chart`, `portrait`, `wish_wall`, `meta_question`, `sample_build_plans`, `food_startups`.
+**Valid display states (6):** `collection`, `stage_chart`, `discipline_chart`, `wish_wall`, `sample_build_plans`, `food_startups`.
 
 ## Data model
 
@@ -43,14 +43,14 @@ Each submission is a structured object (not parallel arrays — keeps generated 
 
 ```js
 {
-  id, stage, discipline, teach, wish, question, build_idea, comfort_food,
+  id, stage, discipline, wish, comfort_food,
   buildPlan: { line1, line2, line3 },
   startupPitch: { name, tagline, pitch },
   ts,
 }
 ```
 
-Caps: `teach` 80, `wish` 100, `question` 200, `build_idea` 100, `comfort_food` 50, total submissions 500.
+Caps: `wish` 100, `comfort_food` 50, total submissions 500.
 
 Stages whitelist: `Skeptic`, `Curious`, `Tinkering`, `Building`.
 Disciplines whitelist: `Entrepreneurship`, `Strategy / Management`, `Marketing`, `Finance / Accounting`, `Operations / Tech`, `Other`.
@@ -62,26 +62,26 @@ Jon advances via admin. Likely cycle: 4–5 of these in 5 minutes; `food_startup
 1. `collection` — count + QR (used while still collecting, e.g. day-of stragglers)
 2. `stage_chart` — distribution across Skeptic→Building
 3. `discipline_chart` — distribution across 6 disciplines
-4. `portrait` — 3-frame portrait (PRACTICE / APPETITE / EDGE) + closing line, synthesized from `teach` field
-5. `wish_wall` — dedup'd cluster of `wish` strings, themed
-6. `meta_question` — clusters + meta-question + outlier, synthesized from `question` field
-7. `sample_build_plans` — 5–8 curated per-respondent build plans (anonymized)
-8. `food_startups` — 5–8 curated comfort-food startup pitches
+4. `wish_wall` — dedup'd cluster of `wish` strings, themed
+5. `sample_build_plans` — 5–8 curated per-respondent build plans (anonymized)
+6. `food_startups` — 5–8 curated comfort-food startup pitches
 
 ## Per-submission synthesis (`POST /api/submit`)
 
-Two Anthropic calls fire in parallel via `Promise.allSettled`, each wrapped in `withTimeout(15s)`. Fallbacks return static content keyed to `stage` (build plan) and a single generic pitch (startup). Prompts are kept verbatim with the PRD in `server.js`.
+Two Anthropic calls fire in parallel via `Promise.allSettled`, each wrapped in `withTimeout(15s)`:
+
+- **Build plan** — derives the 3-line plan from `stage` + `discipline` + `wish`. The wish is the main signal: what they want AI to do becomes the artifact spec.
+- **Startup pitch** — silly fake startup founded around their `comfort_food`.
+
+Fallbacks return static content keyed to `stage` (build plan) and a single generic pitch (startup). `parseClaudeJSON` (3-strategy fallback: direct → strip fences → regex extract) handles all model output.
 
 ## Room-level synthesis
 
-Three admin-triggered endpoints + a "Generate All" parallel fan-out:
+One admin-triggered endpoint:
 
-- `POST /api/admin/synthesize/portrait` — needs ≥5 teach entries
-- `POST /api/admin/synthesize/wish-wall` — needs ≥3 wish entries
-- `POST /api/admin/synthesize/meta-question` — needs ≥5 question entries
-- `POST /api/admin/synthesize/generate-all` — fans out via internal HTTP
+- `POST /api/admin/synthesize/wish-wall` — dedups + themes the raw wish list. Needs ≥3 wish entries. 30s timeout via `withTimeout`.
 
-All three use 30s timeout via `withTimeout`. `parseClaudeJSON` (3-strategy fallback: direct → strip fences → regex extract) handles all model output.
+The `wish_wall` display state shows the curated version when synthesis has run, falls back to the raw wish list otherwise.
 
 ## Curation endpoints
 
@@ -118,10 +118,10 @@ QR code uses `#1a5632` on white. Submit page form uses green for selected states
 
 - Data model flipped from parallel arrays to structured submission objects.
 - New whitelists: `VALID_STAGES`, `VALID_DISCIPLINES`.
-- 5-field form → 7-field form (added `build_idea`, `comfort_food`).
-- `POST /api/submit` now runs two Anthropic calls in parallel and returns personalized output to each respondent.
-- 9 display states → 8 (dropped `frontier`, `clusters`, `outlier`, `invitation`; added `wish_wall`, `sample_build_plans`, `food_startups`).
-- 4 synthesis endpoints → 3 (`portrait` retuned for educators, `wishWall` is dedup-only, `metaQuestion` replaces `clusters`).
+- 5-field form → 4-field form (stage, discipline, wish, comfort_food).
+- `POST /api/submit` now runs two Anthropic calls in parallel and returns personalized output to each respondent (build plan + comfort-food startup pitch).
+- 9 display states → 6 (dropped portrait/frontier/clusters/meta_question/outlier/invitation; added `wish_wall`, `sample_build_plans`, `food_startups`).
+- 4 synthesis endpoints → 1 (just `wish-wall` dedup; per-respondent synthesis runs inline on submit).
 - Two new curation endpoints + admin curation panels.
 - Palette swap to warm earthy (was minimal Babson green-only).
 - Branding copy dropped the Chatbot→Assistant→Agent→Colleague arc framing.

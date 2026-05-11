@@ -131,9 +131,7 @@
       <h2>Room</h2>
       <div class="stats">
         <div class="stat"><div class="stat-num" id="stat-count">0</div><div class="stat-label">Submissions</div></div>
-        <div class="stat"><div class="stat-num" id="stat-teach">0</div><div class="stat-label">"Teach" lines</div></div>
         <div class="stat"><div class="stat-num" id="stat-wish">0</div><div class="stat-label">Wishes</div></div>
-        <div class="stat"><div class="stat-num" id="stat-question">0</div><div class="stat-label">Questions</div></div>
         <div class="stat"><div class="stat-num" id="stat-build">0</div><div class="stat-label">Build plans</div></div>
         <div class="stat"><div class="stat-num" id="stat-food">0</div><div class="stat-label">Food pitches</div></div>
       </div>
@@ -166,14 +164,7 @@
 
     <div class="panel full-col">
       <h2>Room-level synthesis</h2>
-      <p class="panel-desc">Run these once you have a quorum (≥5 teach lines, ≥3 wishes, ≥5 questions). "Generate All" fans out in parallel.</p>
-
-      <div class="synth-row">
-        <div class="synth-name">Portrait of teaching practice</div>
-        <span class="synth-status" id="portrait-status">not run</span>
-        <button class="btn btn-green" id="portrait-btn" onclick="synth('portrait','portrait')">Generate</button>
-      </div>
-      <div class="result-preview" id="portrait-preview"></div>
+      <p class="panel-desc">Run this once you have ≥3 wishes. Cleans up and themes the wish wall.</p>
 
       <div class="synth-row">
         <div class="synth-name">Wish wall (dedup + cluster)</div>
@@ -181,15 +172,6 @@
         <button class="btn btn-green" id="wishWall-btn" onclick="synth('wish-wall','wishWall')">Generate</button>
       </div>
       <div class="result-preview" id="wishWall-preview"></div>
-
-      <div class="synth-row">
-        <div class="synth-name">Meta-question from all questions</div>
-        <span class="synth-status" id="metaQuestion-status">not run</span>
-        <button class="btn btn-green" id="metaQuestion-btn" onclick="synth('meta-question','metaQuestion')">Generate</button>
-      </div>
-      <div class="result-preview" id="metaQuestion-preview"></div>
-
-      <button class="btn btn-teal btn-block" style="margin-top:8px" onclick="synthAll()">⚡ Generate All (in parallel)</button>
     </div>
 
     <div class="panel">
@@ -234,9 +216,7 @@ const DISPLAY_STATES = [
   ['collection', 'Collection (count + QR)'],
   ['stage_chart', 'Stage chart'],
   ['discipline_chart', 'Discipline chart'],
-  ['portrait', 'Portrait of practice'],
   ['wish_wall', 'Wish wall'],
-  ['meta_question', 'Meta-question'],
   ['sample_build_plans', 'Sample build plans'],
   ['food_startups', 'Food startups 🍕'],
 ];
@@ -323,9 +303,7 @@ function setConnected(ok) {
 function render(d) {
   const subs = d.submissions || [];
   document.getElementById('stat-count').textContent = subs.length;
-  document.getElementById('stat-teach').textContent = subs.filter(s => s.teach).length;
   document.getElementById('stat-wish').textContent = subs.filter(s => s.wish).length;
-  document.getElementById('stat-question').textContent = subs.filter(s => s.question).length;
   document.getElementById('stat-build').textContent = subs.filter(s => s.buildPlan).length;
   document.getElementById('stat-food').textContent = subs.filter(s => s.startupPitch).length;
 
@@ -337,18 +315,10 @@ function render(d) {
   renderBars('stage-bars', d.stageDistribution || []);
   renderBars('discipline-bars', d.disciplineDistribution || []);
 
-  updateSynthStatus('portrait', d.synthesizing.portrait, d.portraitResult);
   updateSynthStatus('wishWall', d.synthesizing.wishWall, d.wishWallResult);
-  updateSynthStatus('metaQuestion', d.synthesizing.metaQuestion, d.metaQuestionResult);
 
-  document.getElementById('portrait-preview').textContent = d.portraitResult
-    ? `Practice: ${(d.portraitResult.practice || '').slice(0, 200)}…`
-    : '';
   document.getElementById('wishWall-preview').textContent = d.wishWallResult
     ? `${(d.wishWallResult.wishes || []).length} curated wishes`
-    : '';
-  document.getElementById('metaQuestion-preview').textContent = d.metaQuestionResult
-    ? (d.metaQuestionResult.meta_question || '')
     : '';
 
   // Hydrate selection state from the server exactly once at first paint
@@ -406,15 +376,6 @@ async function synth(endpoint, stateKey) {
   } finally {
     refresh();
   }
-}
-
-async function synthAll() {
-  await fetch('/api/admin/synthesize/generate-all', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-admin-pin': PIN },
-    body: '{}',
-  });
-  refresh();
 }
 
 function renderCurationPlans(subs) {

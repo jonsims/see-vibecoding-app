@@ -75,25 +75,6 @@
     }
     .chart-count { width: 5vw; text-align: right; font-weight: 700; color: var(--green); font-size: 2rem; }
 
-    /* Portrait */
-    .portrait-grid {
-      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2vw; margin-top: 3vh;
-    }
-    .portrait-card {
-      background: white; border: 2px solid var(--green-tint); border-radius: 16px;
-      padding: 3vh 2vw; min-height: 28vh;
-    }
-    .portrait-card .frame-label {
-      font-size: 1rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.18em; color: var(--teal); margin-bottom: 1.6vh;
-    }
-    .portrait-card .frame-body { font-size: 1.6rem; line-height: 1.45; color: var(--ink); }
-    .portrait-closing {
-      font-size: 2.2rem; font-style: italic; color: var(--green-dark);
-      text-align: center; margin-top: 4vh; max-width: 80vw; margin-left: auto; margin-right: auto;
-      line-height: 1.4;
-    }
-
     /* Wish wall */
     .wish-grid {
       display: grid; grid-template-columns: 1fr 1fr; gap: 2vh 3vw;
@@ -110,27 +91,6 @@
       text-transform: uppercase; letter-spacing: 0.08em; flex-shrink: 0; margin-top: 0.4vh;
     }
     .wish-text { flex: 1; }
-
-    /* Meta question */
-    .meta-clusters {
-      display: flex; gap: 1.5vw; margin-top: 2vh; flex-wrap: wrap; justify-content: center;
-    }
-    .meta-cluster {
-      background: white; border: 1px solid var(--green-tint); border-radius: 10px;
-      padding: 1.5vh 1.6vw; font-size: 1.2rem; color: var(--muted);
-    }
-    .meta-cluster strong { color: var(--green); font-size: 1.4rem; }
-    .meta-question-text {
-      font-size: 3rem; font-weight: 700; color: var(--green-dark);
-      line-height: 1.25; text-align: center; max-width: 80vw; margin: 4vh auto 2vh;
-    }
-    .meta-rationale { font-size: 1.4rem; color: var(--muted); text-align: center; max-width: 70vw; margin: 0 auto; font-style: italic; }
-    .meta-outlier {
-      margin-top: 4vh; background: white; padding: 2vh 2vw; border-radius: 12px;
-      border-left: 6px solid var(--teal); max-width: 80vw; margin-left: auto; margin-right: auto;
-    }
-    .meta-outlier .label { font-size: 0.9rem; font-weight: 700; color: var(--teal); text-transform: uppercase; letter-spacing: 0.12em; }
-    .meta-outlier .text { font-size: 1.7rem; color: var(--ink); margin-top: 1vh; line-height: 1.35; }
 
     /* Sample build plans */
     .plans-grid {
@@ -170,7 +130,6 @@
 
     /* Big small screens: scale down chart-only and food-only states gracefully */
     @media (max-aspect-ratio: 4/3) {
-      .portrait-grid { grid-template-columns: 1fr; }
       .wish-grid { grid-template-columns: 1fr; }
       .plans-grid { grid-template-columns: 1fr; }
       .food-grid { grid-template-columns: 1fr; }
@@ -218,7 +177,7 @@ async function poll() {
 function render(d) {
   const sig = JSON.stringify({ st: d.displayState, c: d.count,
     s: d.stageDistribution, dd: d.disciplineDistribution,
-    p: d.portraitResult, w: d.wishWallResult, m: d.metaQuestionResult,
+    w: d.wishWallResult,
     bp: d.selectedBuildPlans, fs: d.selectedFoodStartups,
   });
   if (sig === lastState) return;
@@ -228,9 +187,7 @@ function render(d) {
     case 'collection': return renderCollection(d);
     case 'stage_chart': return renderChart('Stage of practice', d.stageDistribution);
     case 'discipline_chart': return renderChart('Disciplines in the room', d.disciplineDistribution);
-    case 'portrait': return renderPortrait(d.portraitResult);
     case 'wish_wall': return renderWishWall(d.wishWallResult, d.wishes);
-    case 'meta_question': return renderMetaQuestion(d.metaQuestionResult);
     case 'sample_build_plans': return renderBuildPlans(d.selectedBuildPlans);
     case 'food_startups': return renderFoodStartups(d.selectedFoodStartups);
     default: return renderCollection(d);
@@ -292,29 +249,6 @@ function renderChart(title, dist) {
   `;
 }
 
-function renderPortrait(p) {
-  if (!p) {
-    $stage.innerHTML = `<div class="eyebrow">Portrait</div><div class="empty">Run "Portrait" from admin first.</div>`;
-    return;
-  }
-  $stage.innerHTML = `
-    <div class="eyebrow">Portrait of this room's practice</div>
-    <div class="portrait-grid">
-      ${frame('Practice', p.practice)}
-      ${frame('Appetite', p.appetite)}
-      ${frame('Edge', p.edge)}
-    </div>
-    ${p.closing ? `<div class="portrait-closing">"${escapeHtml(p.closing)}"</div>` : ''}
-  `;
-}
-
-function frame(label, body) {
-  return `<div class="portrait-card">
-    <div class="frame-label">${label}</div>
-    <div class="frame-body">${escapeHtml(body || '')}</div>
-  </div>`;
-}
-
 function renderWishWall(synth, rawWishes) {
   // Prefer the synthesized (dedup'd) version; fall back to raw wishes
   const items = synth && Array.isArray(synth.wishes) && synth.wishes.length
@@ -335,27 +269,6 @@ function renderWishWall(synth, rawWishes) {
         </div>
       `).join('')}
     </div>
-  `;
-}
-
-function renderMetaQuestion(m) {
-  if (!m) {
-    $stage.innerHTML = `<div class="eyebrow">Meta-question</div><div class="empty">Run "Meta-question" from admin first.</div>`;
-    return;
-  }
-  $stage.innerHTML = `
-    <div class="eyebrow">The room's question, distilled</div>
-    <div class="meta-question-text">"${escapeHtml(m.meta_question || '')}"</div>
-    ${m.meta_question_rationale ? `<div class="meta-rationale">${escapeHtml(m.meta_question_rationale)}</div>` : ''}
-    <div class="meta-clusters">
-      ${(m.clusters || []).map(c => `<div class="meta-cluster"><strong>${c.count}</strong> · ${escapeHtml(c.label)}</div>`).join('')}
-    </div>
-    ${m.outlier_question ? `
-      <div class="meta-outlier">
-        <div class="label">Outlier worth naming</div>
-        <div class="text">${escapeHtml(m.outlier_question)}</div>
-      </div>
-    ` : ''}
   `;
 }
 

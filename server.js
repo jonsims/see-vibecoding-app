@@ -33,17 +33,12 @@ const VALID_STATES = [
   'collection',
   'stage_chart',
   'discipline_chart',
-  'portrait',
   'wish_wall',
-  'meta_question',
   'sample_build_plans',
   'food_startups',
 ];
 
-const CAP_TEACH = 80;
 const CAP_WISH = 100;
-const CAP_QUESTION = 200;
-const CAP_BUILD = 100;
 const CAP_FOOD = 50;
 const CAP_TOTAL_SUBMISSIONS = 500;
 
@@ -101,12 +96,10 @@ function makeEmptySession() {
     submissions: [],
     nextId: 1,
     displayState: 'collection',
-    portraitResult: null,
     wishWallResult: null,
-    metaQuestionResult: null,
     selectedBuildPlans: [],
     selectedFoodStartups: [],
-    synthesizing: { portrait: false, wishWall: false, metaQuestion: false },
+    synthesizing: { wishWall: false },
   };
 }
 
@@ -153,16 +146,15 @@ function fallbackStartupPitch() {
 
 // ─── Per-submission synthesis ───────────────────────────────────────────────
 
-async function generateBuildPlan({ stage, discipline, build_idea, wish }) {
+async function generateBuildPlan({ stage, discipline, wish }) {
   const prompt = `You are a workshop facilitator writing one personalized 3-line build plan for an entrepreneurship educator attending a 90-minute hands-on "vibe coding with Claude Cowork" workshop on Tuesday.
 
 Their stage with AI: ${stage}
 Their discipline: ${discipline}
-They wrote: "${build_idea || '(left blank)'}"
-What they already wish AI could do: "${wish || '(left blank)'}"
+What they wish AI could do for their teaching but doesn't yet: "${wish || '(left blank)'}"
 
-Write a 3-line build plan they could attempt during the workshop:
-- Line 1: the artifact to build (one phrase, names the output)
+Turn their wish into a 3-line build plan they could actually attempt during the workshop:
+- Line 1: the artifact to build (one phrase, names the output that addresses the wish)
 - Line 2: the input/data they'd give Cowork (one phrase)
 - Line 3: the success test (one phrase, how they'll know it worked)
 
@@ -251,10 +243,7 @@ app.post('/api/submit', async (req, res) => {
     id: session.nextId++,
     stage,
     discipline,
-    teach: clampText(req.body.teach, CAP_TEACH),
     wish: clampText(req.body.wish, CAP_WISH),
-    question: clampText(req.body.question, CAP_QUESTION),
-    build_idea: clampText(req.body.build_idea, CAP_BUILD),
     comfort_food: clampText(req.body.comfort_food, CAP_FOOD),
     buildPlan: null,
     startupPitch: null,
@@ -302,9 +291,7 @@ app.get('/api/state', (req, res) => {
     stageDistribution: distribution(subs.map(s => s.stage), VALID_STAGES),
     disciplineDistribution: distribution(subs.map(s => s.discipline), VALID_DISCIPLINES),
     wishes: subs.map(s => s.wish).filter(Boolean),
-    portraitResult: session.portraitResult,
     wishWallResult: session.wishWallResult,
-    metaQuestionResult: session.metaQuestionResult,
     selectedBuildPlans,
     selectedFoodStartups,
     synthesizing: session.synthesizing,
@@ -330,9 +317,7 @@ app.get('/api/admin/data', (req, res) => {
     stageDistribution: distribution(subs.map(s => s.stage), VALID_STAGES),
     disciplineDistribution: distribution(subs.map(s => s.discipline), VALID_DISCIPLINES),
     displayState: session.displayState,
-    portraitResult: session.portraitResult,
     wishWallResult: session.wishWallResult,
-    metaQuestionResult: session.metaQuestionResult,
     selectedBuildPlans: session.selectedBuildPlans,
     selectedFoodStartups: session.selectedFoodStartups,
     synthesizing: session.synthesizing,
@@ -385,54 +370,6 @@ app.post('/api/admin/next-session', (req, res) => {
   res.json({ ok: true, message: 'Ready for next session' });
 });
 
-// ─── Room-level synthesis: Portrait ─────────────────────────────────────────
-
-app.post('/api/admin/synthesize/portrait', async (req, res) => {
-  if (!checkPin(req, res)) return;
-  if (session.synthesizing.portrait) return res.status(409).json({ error: 'Synthesis already in progress' });
-  const teaches = session.submissions.map(s => s.teach).filter(Boolean);
-  if (teaches.length < 5) return res.status(400).json({ error: 'Need at least 5 "teach-a-colleague" responses' });
-
-  session.synthesizing.portrait = true;
-  try {
-    const numbered = teaches.map((t, i) => `${i + 1}. ${t}`).join('\n');
-    const stageDist = distribution(session.submissions.map(s => s.stage), VALID_STAGES).map(r => `${r.label}: ${r.count}`).join(', ');
-    const discDist = distribution(session.submissions.map(s => s.discipline), VALID_DISCIPLINES).map(r => `${r.label}: ${r.count}`).join(', ');
-
-    const prompt = `You are helping Jonathan Sims open a 90-minute hands-on "Vibe Coding for Entrepreneurship Education" workshop at Babson's 55th Price-Babson SEE. The room is 48–50 entrepreneurship educators from 11 countries. They submitted, pre-class, one AI move they would teach a fellow educator tomorrow.
-
-Room composition — stage with AI: ${stageDist}
-Room composition — discipline: ${discDist}
-
-AI moves the room would teach each other:
-${numbered}
-
-Write a "portrait of this room's teaching practice with AI" in three short frames. Each frame should land in 2–3 sentences, 30–50 words each. Plain English. No jargon (avoid "LLM," "prompt engineering," "tokens," "agentic"). Specific, with at least one paraphrased example pulled from the submissions in each frame.
-
-PRACTICE — what is the room actually doing with AI right now in their teaching?
-APPETITE — what hunger or curiosity shows up across these answers?
-EDGE — what specific teaching move keeps appearing that another educator could borrow tomorrow?
-
-Then write ONE closing line (20–30 words) that names something this specific room is quietly good at as a cohort — warm, specific, no buzzwords.
-
-Return ONLY valid JSON with no extra text, no markdown, no code fences:
-{"practice":"...","appetite":"...","edge":"...","closing":"..."}`;
-
-    const message = await withTimeout(
-      anthropic.messages.create({ model: MODEL, max_tokens: 900, messages: [{ role: 'user', content: prompt }] }),
-      30000
-    );
-
-    session.portraitResult = parseClaudeJSON(message.content[0].text.trim());
-    res.json({ ok: true, result: session.portraitResult });
-  } catch (err) {
-    console.error('Portrait synthesis error:', err);
-    res.status(500).json({ error: synthesisErrorMessage(err) });
-  } finally {
-    session.synthesizing.portrait = false;
-  }
-});
-
 // ─── Room-level synthesis: Wish Wall (dedup + light cluster) ────────────────
 
 app.post('/api/admin/synthesize/wish-wall', async (req, res) => {
@@ -474,72 +411,6 @@ Return ONLY valid JSON with no extra text, no markdown, no code fences:
   }
 });
 
-// ─── Room-level synthesis: Meta-Question ────────────────────────────────────
-
-app.post('/api/admin/synthesize/meta-question', async (req, res) => {
-  if (!checkPin(req, res)) return;
-  if (session.synthesizing.metaQuestion) return res.status(409).json({ error: 'Synthesis already in progress' });
-  const questions = session.submissions.map(s => s.question).filter(Boolean);
-  if (questions.length < 5) return res.status(400).json({ error: 'Need at least 5 questions first' });
-
-  session.synthesizing.metaQuestion = true;
-  try {
-    const numbered = questions.map((q, i) => `${i + 1}. ${q}`).join('\n');
-
-    const prompt = `You are helping Jonathan Sims open a hands-on vibe-coding workshop for entrepreneurship educators at Babson's 55th Price-Babson SEE. They submitted, pre-class, their hardest question about AI in entrepreneurship education.
-
-All submitted questions:
-${numbered}
-
-Please do the following:
-
-1. GROUP the questions into 3–4 thematic clusters. Give each cluster a short label (3–5 words) and a count, plus one near-verbatim example question from that cluster.
-
-2. SYNTHESIZE one "meta question" (under 22 words) — the single question that, if answered well, would speak to the most people in the room, including those who didn't quite know how to phrase what they were feeling.
-
-3. Write a brief rationale (under 30 words) explaining why this question captures the room.
-
-4. SURFACE one "outlier question" — too specific or too different to fit, but worth naming. Add a brief note (under 20 words) on why it stood out.
-
-Return ONLY valid JSON with no extra text, no markdown, no code fences:
-{"clusters":[{"label":"...","count":N,"example_question":"..."}],"meta_question":"...","meta_question_rationale":"...","outlier_question":"...","outlier_note":"..."}`;
-
-    const message = await withTimeout(
-      anthropic.messages.create({ model: MODEL, max_tokens: 900, messages: [{ role: 'user', content: prompt }] }),
-      30000
-    );
-
-    session.metaQuestionResult = parseClaudeJSON(message.content[0].text.trim());
-    res.json({ ok: true, result: session.metaQuestionResult });
-  } catch (err) {
-    console.error('Meta-question synthesis error:', err);
-    res.status(500).json({ error: synthesisErrorMessage(err) });
-  } finally {
-    session.synthesizing.metaQuestion = false;
-  }
-});
-
-// ─── Generate All (parallel fan-out via internal HTTP) ──────────────────────
-
-app.post('/api/admin/synthesize/generate-all', async (req, res) => {
-  if (!checkPin(req, res)) return;
-
-  const headers = { 'Content-Type': 'application/json', 'x-admin-pin': ADMIN_PIN };
-  const base = `http://localhost:${PORT}`;
-  const targets = ['portrait', 'wish-wall', 'meta-question'];
-  const results = await Promise.allSettled(
-    targets.map(t =>
-      fetch(`${base}/api/admin/synthesize/${t}`, { method: 'POST', headers, body: '{}' }).then(r => r.json())
-    )
-  );
-  res.json({
-    ok: true,
-    portrait: results[0].status === 'fulfilled' ? results[0].value : { error: results[0].reason?.message },
-    wishWall: results[1].status === 'fulfilled' ? results[1].value : { error: results[1].reason?.message },
-    metaQuestion: results[2].status === 'fulfilled' ? results[2].value : { error: results[2].reason?.message },
-  });
-});
-
 // ─── Test data loader ──────────────────────────────────────────────────────
 
 const TEST_SUBMISSIONS = require('./test-data.js');
@@ -553,10 +424,7 @@ app.post('/api/admin/load-test-data', (req, res) => {
       id: session.nextId++,
       stage: t.stage,
       discipline: t.discipline,
-      teach: t.teach,
       wish: t.wish,
-      question: t.question,
-      build_idea: t.build_idea,
       comfort_food: t.comfort_food,
       buildPlan: t.buildPlan,
       startupPitch: t.startupPitch,

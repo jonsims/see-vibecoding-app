@@ -113,7 +113,7 @@
 <body>
   <header>
     <h1>Pre-class check-in: SEE Vibecoding</h1>
-    <p>Seven quick questions — about 75–90 seconds</p>
+    <p>Four quick questions — about 30–45 seconds</p>
   </header>
 
   <div class="form" id="form">
@@ -133,38 +133,17 @@
       <input type="hidden" id="discipline-val">
     </div>
 
-    <div class="section-label second">Now, five short answers</div>
+    <div class="section-label second">Now, two short answers</div>
 
     <div class="q-block">
-      <label class="q-label"><span class="q-num">3</span>One AI move you'd teach a fellow educator tomorrow</label>
-      <span class="q-hint">A sentence is fine</span>
-      <input type="text" id="teach" maxlength="80" placeholder="e.g. paste your rubric into Claude and ask what contradicts" autocomplete="off">
-      <div class="char-count"><span id="teach-count">0</span>/80</div>
-    </div>
-
-    <div class="q-block">
-      <label class="q-label"><span class="q-num">4</span>Something you wish AI could do for your teaching but doesn't yet</label>
-      <span class="q-hint">A real frustration, not a fantasy</span>
+      <label class="q-label"><span class="q-num">3</span>Something you wish AI could do for your teaching but doesn't yet</label>
+      <span class="q-hint">We'll send you back a 3-line build plan for Tuesday based on this</span>
       <input type="text" id="wish" maxlength="100" placeholder="e.g. read all twenty journals and flag the three I should worry about" autocomplete="off">
       <div class="char-count"><span id="wish-count">0</span>/100</div>
     </div>
 
     <div class="q-block">
-      <label class="q-label"><span class="q-num">5</span>Your hardest question about AI in entrepreneurship education</label>
-      <span class="q-hint">Keep it to a line or two</span>
-      <textarea id="question" maxlength="200" placeholder="What are you actually wrestling with?"></textarea>
-      <div class="char-count"><span id="question-count">0</span>/200</div>
-    </div>
-
-    <div class="q-block">
-      <label class="q-label"><span class="q-num">6</span>Something useful you'd vibe-code if you had time</label>
-      <span class="q-hint">We'll send you back a 3-line build plan for Tuesday</span>
-      <input type="text" id="build_idea" maxlength="100" placeholder="e.g. a one-page concept-check generator from my slides" autocomplete="off">
-      <div class="char-count"><span id="build-count">0</span>/100</div>
-    </div>
-
-    <div class="q-block">
-      <label class="q-label"><span class="q-num">7</span>Your comfort food after a hard teaching day</label>
+      <label class="q-label"><span class="q-num">4</span>Your comfort food after a hard teaching day</label>
       <span class="q-hint">Stay with us — this one matters more than it looks</span>
       <input type="text" id="comfort_food" maxlength="50" placeholder="e.g. dark chocolate / leftover dumplings" autocomplete="off">
       <div class="char-count"><span id="food-count">0</span>/50</div>
@@ -239,10 +218,7 @@
     }
 
     const counters = [
-      ['teach', 'teach-count'],
       ['wish', 'wish-count'],
-      ['question', 'question-count'],
-      ['build_idea', 'build-count'],
       ['comfort_food', 'food-count'],
     ];
     counters.forEach(([id, countId]) => {
@@ -256,10 +232,7 @@
 
       const stage = document.getElementById('stage-val').value;
       const discipline = document.getElementById('discipline-val').value;
-      const teach = document.getElementById('teach').value.trim();
       const wish = document.getElementById('wish').value.trim();
-      const question = document.getElementById('question').value.trim();
-      const build_idea = document.getElementById('build_idea').value.trim();
       const comfort_food = document.getElementById('comfort_food').value.trim();
       const errorEl = document.getElementById('submit-error');
       const btn = document.getElementById('submit-btn');
@@ -280,7 +253,7 @@
         const r = await fetch('/api/submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ stage, discipline, teach, wish, question, build_idea, comfort_food }),
+          body: JSON.stringify({ stage, discipline, wish, comfort_food }),
           signal: controller.signal,
         });
         if (!r.ok) {
