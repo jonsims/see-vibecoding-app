@@ -225,8 +225,11 @@ function clampText(v, cap) {
   return v.trim().slice(0, cap);
 }
 
-// Submit form — runs build_plan + startup_pitch in parallel, returns personalized output
-app.post('/api/submit', async (req, res) => {
+// Submit form — store immediately, generate build plan + startup pitch in
+// the background so the respondent gets an instant confirmation. The
+// generated content is reviewed/curated by the admin before the cold open;
+// it is never shown to the submitter.
+app.post('/api/submit', (req, res) => {
   const { stage, discipline } = req.body;
 
   if (!stage || !VALID_STAGES.includes(stage)) {
@@ -250,27 +253,27 @@ app.post('/api/submit', async (req, res) => {
     ts: Date.now(),
   };
   session.submissions.push(sub);
+  res.json({ ok: true });
 
-  const [planRes, pitchRes] = await Promise.allSettled([
+  // Fire-and-forget — the respondent has their confirmation, generation
+  // populates buildPlan + startupPitch in the background for admin curation.
+  Promise.allSettled([
     withTimeout(generateBuildPlan(sub), 15000),
     withTimeout(generateStartupPitch(sub), 15000),
-  ]);
-
-  if (planRes.status === 'fulfilled' && planRes.value && planRes.value.line1) {
-    sub.buildPlan = planRes.value;
-  } else {
-    if (planRes.status === 'rejected') console.error('[build-plan] fallback used:', planRes.reason?.message);
-    sub.buildPlan = fallbackBuildPlan(stage);
-  }
-
-  if (pitchRes.status === 'fulfilled' && pitchRes.value && pitchRes.value.name) {
-    sub.startupPitch = pitchRes.value;
-  } else {
-    if (pitchRes.status === 'rejected') console.error('[startup-pitch] fallback used:', pitchRes.reason?.message);
-    sub.startupPitch = fallbackStartupPitch();
-  }
-
-  res.json({ ok: true, buildPlan: sub.buildPlan, startupPitch: sub.startupPitch });
+  ]).then(([planRes, pitchRes]) => {
+    if (planRes.status === 'fulfilled' && planRes.value && planRes.value.line1) {
+      sub.buildPlan = planRes.value;
+    } else {
+      if (planRes.status === 'rejected') console.error('[build-plan] fallback used:', planRes.reason?.message);
+      sub.buildPlan = fallbackBuildPlan(stage);
+    }
+    if (pitchRes.status === 'fulfilled' && pitchRes.value && pitchRes.value.name) {
+      sub.startupPitch = pitchRes.value;
+    } else {
+      if (pitchRes.status === 'rejected') console.error('[startup-pitch] fallback used:', pitchRes.reason?.message);
+      sub.startupPitch = fallbackStartupPitch();
+    }
+  });
 });
 
 // Public polling endpoint — display.html reads this every 2s

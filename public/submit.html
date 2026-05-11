@@ -83,31 +83,14 @@
 
     .card {
       background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
-      padding: 20px 22px; margin-bottom: 18px; box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+      padding: 24px 24px; margin-bottom: 18px; box-shadow: 0 1px 0 rgba(0,0,0,0.02);
     }
-    .card .eyebrow {
-      font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em;
-      color: var(--teal); margin-bottom: 12px;
-    }
-    .plan-line {
-      font-size: 1.05rem; line-height: 1.45; color: var(--ink);
-      padding: 5px 0; border-bottom: 1px dashed rgba(0,0,0,0.06);
-    }
-    .plan-line:last-of-type { border-bottom: none; }
-    .plan-line .marker { color: var(--teal); font-weight: 700; margin-right: 8px; }
-    .copy-btn {
-      margin-top: 12px; background: transparent; border: 1.5px solid var(--teal); color: var(--teal);
-      padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;
-      font-family: inherit;
-    }
-    .copy-btn.copied { background: var(--teal); color: white; }
+    .success-card p { font-size: 1.02rem; line-height: 1.55; color: var(--ink); margin-bottom: 14px; }
+    .success-card p:last-of-type { margin-bottom: 0; }
+    .success-card p strong { color: var(--green-dark); }
+    .success-card .see-you { font-size: 1.1rem; font-weight: 700; color: var(--green-dark); margin-top: 8px; }
 
-    .pitch-name { font-size: 1.15rem; font-weight: 700; color: var(--green-dark); }
-    .pitch-tagline { color: var(--teal); font-style: italic; margin-top: 2px; font-size: 0.98rem; }
-    .pitch-body { margin-top: 10px; font-size: 0.98rem; line-height: 1.5; color: var(--ink); }
-
-    .save-note { text-align: center; color: var(--muted); font-size: 0.92rem; margin: 22px 0 6px; }
-    .footer { text-align: center; color: var(--hint); font-size: 0.78rem; margin-top: 10px; }
+    .footer { text-align: center; color: var(--hint); font-size: 0.78rem; margin-top: 18px; }
   </style>
 </head>
 <body>
@@ -159,23 +142,15 @@
       <div class="check-text">You're in.</div>
     </div>
 
-    <div class="card" id="plan-card">
-      <div class="eyebrow">Your starter for Tuesday</div>
-      <div class="plan-line"><span class="marker">1</span><span id="plan-line1"></span></div>
-      <div class="plan-line"><span class="marker">2</span><span id="plan-line2"></span></div>
-      <div class="plan-line"><span class="marker">3</span><span id="plan-line3"></span></div>
-      <button class="copy-btn" id="copy-btn" onclick="copyPlan()">Copy plan</button>
+    <div class="card success-card">
+      <p>By 5pm Tuesday, every person in the room will walk out with one working thing they built themselves — with their hands on a keyboard, using messy real data from their own teaching.</p>
+      <p>You don't have to write code. You don't have to know what an API is.</p>
+      <p><strong>The only prep:</strong> bring one annoying problem from your teaching life this term.</p>
+      <p>Skeptics will find where the tool earns its keep. Builders will steal each other's patterns. Everyone else will walk out with the first version of something they've been putting off.</p>
+      <p class="see-you">See you in the room.</p>
     </div>
 
-    <div class="card" id="pitch-card">
-      <div class="eyebrow">A bonus (because we're going to vibe-code, why not)</div>
-      <div class="pitch-name" id="pitch-name"></div>
-      <div class="pitch-tagline" id="pitch-tagline"></div>
-      <div class="pitch-body" id="pitch-body"></div>
-    </div>
-
-    <div class="save-note">Save these. We'll use them Tuesday.</div>
-    <div class="footer">Jonathan Sims · Babson College · May 12, 2026</div>
+    <div class="footer">Babson College · May 12, 2026</div>
   </div>
 
   <script>
@@ -186,7 +161,6 @@
       'Building':   "I'm designing AI into my courses",
     };
     let submitting = false;
-    let currentPlan = null;
 
     (function loadEnums() {
       const controller = new AbortController();
@@ -244,10 +218,10 @@
 
       submitting = true;
       btn.disabled = true;
-      btn.textContent = 'Generating your starter…';
+      btn.textContent = 'Submitting…';
 
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 20000);
+      const timeout = setTimeout(() => controller.abort(), 8000);
 
       try {
         const r = await fetch('/api/submit', {
@@ -260,11 +234,10 @@
           const data = await r.json().catch(() => ({}));
           throw new Error(data.error || 'Server error');
         }
-        const { buildPlan, startupPitch } = await r.json();
-        showConfirmation(buildPlan, startupPitch);
+        showConfirmation();
       } catch (err) {
         if (err.name === 'AbortError') {
-          showError("Slow connection — we saved your answers. Your starter will appear in the workshop instead. See you Tuesday.");
+          showError('Slow connection — please try again.');
         } else {
           showError(err.message || 'Something went wrong — please try again.');
         }
@@ -281,35 +254,10 @@
       }
     }
 
-    function showConfirmation(buildPlan, startupPitch) {
-      currentPlan = buildPlan;
-      document.getElementById('plan-line1').textContent = buildPlan.line1 || '';
-      document.getElementById('plan-line2').textContent = buildPlan.line2 || '';
-      document.getElementById('plan-line3').textContent = buildPlan.line3 || '';
-      document.getElementById('pitch-name').textContent = startupPitch.name || '';
-      document.getElementById('pitch-tagline').textContent = startupPitch.tagline || '';
-      document.getElementById('pitch-body').textContent = startupPitch.pitch || '';
+    function showConfirmation() {
       document.getElementById('form').style.display = 'none';
       document.getElementById('success').style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'instant' });
-    }
-
-    async function copyPlan() {
-      if (!currentPlan) return;
-      const text = `1. ${currentPlan.line1}\n2. ${currentPlan.line2}\n3. ${currentPlan.line3}`;
-      try {
-        await navigator.clipboard.writeText(text);
-        const btn = document.getElementById('copy-btn');
-        btn.textContent = 'Copied ✓';
-        btn.classList.add('copied');
-        setTimeout(() => {
-          btn.textContent = 'Copy plan';
-          btn.classList.remove('copied');
-        }, 2000);
-      } catch {
-        // Fallback: select-and-prompt
-        prompt('Copy this:', text);
-      }
     }
 
     function escapeHtml(s) {
