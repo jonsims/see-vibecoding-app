@@ -20,7 +20,10 @@ npm run dev       # Run with --watch for auto-reload
 ## Deployment
 
 - **Local:** http://localhost:3011 — and `https://local.see-vibecoding-app` via Caddy (port 3000 was taken by `local.mymem`).
-- **Production:** https://see-vibecoding-app.onrender.com — Render Starter plan (no spin-down), service ID `srv-d80slqvaqgkc73adn3e0`, region oregon, auto-deploy on push to `main`. Env vars set: `ANTHROPIC_API_KEY`, `ADMIN_PIN`, `NODE_VERSION=22`. Dashboard: https://dashboard.render.com/web/srv-d80slqvaqgkc73adn3e0
+- **Production:** https://see-vibecoding-app.onrender.com — Render **Standard** plan (zero-downtime deploys, 1 CPU / 2GB), region oregon, service ID `srv-d80slqvaqgkc73adn3e0`. **Auto-deploy is OFF** during workshop week — re-enable from the Render dashboard after Wednesday. Plan can downgrade back to Starter post-workshop.
+- **Persistence:** 1GB Persistent Disk (`dsk-d80um68g4nts7390lorg`) mounted at `/data`. Server writes `session.json` on every mutation (coalesced 500ms) and restores on boot. Submissions survive any restart/redeploy. Falls back to memory-only when `/data` isn't writable (e.g. local dev).
+- **Rate-limited:** `/api/submit` 10/min/IP, `/api/admin/*` 60/min/IP. Custom keyGenerator reads X-Forwarded-For leftmost (Render's `req.ip` was bouncing between IPv4 and IPv4-mapped IPv6 buckets, splitting one client across multiple counters).
+- **Env vars set:** `ANTHROPIC_API_KEY`, `ADMIN_PIN=1234`, `NODE_VERSION=22`. Dashboard (Render UI): https://dashboard.render.com/web/srv-d80slqvaqgkc73adn3e0 — note: the Render account this lives under is `jonsims99@gmail.com` (linked via GitHub OAuth), not the system `userEmail` Claude Code reports.
 
 ## Environment
 
@@ -90,9 +93,14 @@ The `wish_wall` display state shows the curated version when synthesis has run, 
 
 The display state for `sample_build_plans` and `food_startups` reads only from these curated id lists, so Jon can pick 5–8 of the strongest before the cold open starts.
 
+## Observability + recovery
+
+- `GET /healthz` — public, lightweight stats endpoint: `{uptimeSec, persistence, submissionCount, withBuildPlan, withStartupPitch, aiBacklog, selectedBuildPlans, selectedFoodStartups, synthesizing, displayState}`. Use during the workshop to spot drift (e.g., `aiBacklog > 0` after collection window closes means some submissions never got their AI artifacts).
+- `POST /api/admin/regenerate-missing` — re-runs background generation for any submission missing `buildPlan` or `startupPitch`. Recovery path if Anthropic flakes during the collection window. Surfaced in admin as "Re-run missing AI generation" button.
+
 ## Test data
 
-`test-data.js` exports 50 hand-written submissions covering the full stage × discipline grid, each with a pre-generated `buildPlan` and `startupPitch`. Loading test data via `POST /api/admin/load-test-data` is instant and doesn't hit the API — safe to use repeatedly while prepping.
+`test-data.js` exports 50 hand-written submissions covering the full stage × discipline grid, each with a pre-generated `buildPlan` and `startupPitch`. Loading test data via `POST /api/admin/load-test-data` is instant and doesn't hit the API — safe to use repeatedly while prepping. The button now lives in the "Recovery + tools" panel (teal), separated from the red "Wipe & start next session" Danger Zone to prevent fat-finger wipes during the cold open.
 
 ## Key patterns (preserved from parent)
 
