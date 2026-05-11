@@ -36,17 +36,26 @@ app.use(express.json({ limit: '10kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Rate limits. /submit: protect against bulk spam by one client. /api/admin/*: PIN brute-force.
-// express-rate-limit v8 renamed `max` to `limit`; setting both for portability.
+// Custom keyGenerator: pull the leftmost X-Forwarded-For entry (the real client IP per
+// Render's forwarding chain). express-rate-limit's default keyGenerator uses req.ip which
+// can flip between IPv4 and IPv4-mapped IPv6 representations across requests behind Render's
+// proxy, splitting one client across multiple buckets. Reading XFF[0] directly is stable.
+const clientIpKey = (req) => {
+  const xff = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return xff || req.ip || 'unknown';
+};
 const submitLimiter = rateLimit({
   windowMs: 60 * 1000, limit: 10, max: 10,
   standardHeaders: true, legacyHeaders: false,
-  validate: { trustProxy: false }, // suppress noisy proxy-hop warning; we know we're behind Render
+  validate: { trustProxy: false },
+  keyGenerator: clientIpKey,
   message: { error: 'Too many submissions from this device. Try again in a minute.' },
 });
 const adminLimiter = rateLimit({
   windowMs: 60 * 1000, limit: 60, max: 60,
   standardHeaders: true, legacyHeaders: false,
   validate: { trustProxy: false },
+  keyGenerator: clientIpKey,
   message: { error: 'Too many admin requests. Try again in a minute.' },
 });
 
