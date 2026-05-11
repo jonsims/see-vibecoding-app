@@ -36,14 +36,17 @@ app.use(express.json({ limit: '10kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Rate limits. /submit: protect against bulk spam by one client. /api/admin/*: PIN brute-force.
+// express-rate-limit v8 renamed `max` to `limit`; setting both for portability.
 const submitLimiter = rateLimit({
-  windowMs: 60 * 1000, max: 10,
+  windowMs: 60 * 1000, limit: 10, max: 10,
   standardHeaders: true, legacyHeaders: false,
+  validate: { trustProxy: false }, // suppress noisy proxy-hop warning; we know we're behind Render
   message: { error: 'Too many submissions from this device. Try again in a minute.' },
 });
 const adminLimiter = rateLimit({
-  windowMs: 60 * 1000, max: 60,
+  windowMs: 60 * 1000, limit: 60, max: 60,
   standardHeaders: true, legacyHeaders: false,
+  validate: { trustProxy: false },
   message: { error: 'Too many admin requests. Try again in a minute.' },
 });
 
