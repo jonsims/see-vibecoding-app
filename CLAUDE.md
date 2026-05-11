@@ -19,8 +19,8 @@ npm run dev       # Run with --watch for auto-reload
 
 ## Deployment
 
-- **Local:** http://localhost:3000 — and `https://local.see-vibecoding-app` via Caddy.
-- **Production:** Render service `see-vibecoding-app` (separate from `ai-in-practice`). `render.yaml` is committed but the service has not been connected yet — Jon needs to add env vars (`ANTHROPIC_API_KEY`, `ADMIN_PIN`) via the Render dashboard before first deploy.
+- **Local:** http://localhost:3011 — and `https://local.see-vibecoding-app` via Caddy (port 3000 was taken by `local.mymem`).
+- **Production:** https://see-vibecoding-app.onrender.com — Render Starter plan (no spin-down), service ID `srv-d80slqvaqgkc73adn3e0`, region oregon, auto-deploy on push to `main`. Env vars set: `ANTHROPIC_API_KEY`, `ADMIN_PIN`, `NODE_VERSION=22`. Dashboard: https://dashboard.render.com/web/srv-d80slqvaqgkc73adn3e0
 
 ## Environment
 
@@ -31,7 +31,7 @@ npm run dev       # Run with --watch for auto-reload
 Single-file Express server (`server.js`) with all state in memory. No database — data resets on restart.
 
 **Three static pages from `public/`:**
-- `submit.html` — mobile-first form, 4 fields (2 picks + 2 short texts), 30–45s target completion. On submit, runs two synthesis calls in parallel via `Promise.allSettled` (15s combined timeout); returns a personalized 3-line build plan + a silly comfort-food startup pitch.
+- `submit.html` — mobile-first form, 4 fields (2 picks + 2 short texts), 30–45s target completion. Confirmation page shows a live room-snapshot card (you're #N to check in, stage distribution bars) + a "one small thing before Tuesday" card pointing at `claude.ai/download`. The respondent never sees AI-generated output.
 - `admin.html` — PIN-protected control panel. 6 display state buttons, 1 room-level synthesis (wish wall), and two curation panels (build plans + food startups).
 - `display.html` — full-screen projector view with 6 states, polls `/api/state` every 2 seconds.
 
@@ -68,12 +68,12 @@ Jon advances via admin. Likely cycle: 4–5 of these in 5 minutes; `food_startup
 
 ## Per-submission synthesis (`POST /api/submit`)
 
-Two Anthropic calls fire in parallel via `Promise.allSettled`, each wrapped in `withTimeout(15s)`:
+`POST /api/submit` is **fire-and-forget** for the AI calls — it stores the submission and responds immediately (~15ms) with the room snapshot. The two Anthropic calls fire in the background after the response goes out:
 
 - **Build plan** — derives the 3-line plan from `stage` + `discipline` + `wish`. The wish is the main signal: what they want AI to do becomes the artifact spec.
 - **Startup pitch** — silly fake startup founded around their `comfort_food`.
 
-Fallbacks return static content keyed to `stage` (build plan) and a single generic pitch (startup). `parseClaudeJSON` (3-strategy fallback: direct → strip fences → regex extract) handles all model output.
+Both wrap in `withTimeout(15s)` and fall back to static content (keyed to `stage` for build plan, single generic pitch otherwise). Results land on the submission object for admin curation; **the respondent never sees this output** (per Jon: don't send un-vetted AI text to attendees). `parseClaudeJSON` (3-strategy fallback: direct → strip fences → regex extract) handles all model output.
 
 ## Room-level synthesis
 
@@ -119,9 +119,10 @@ QR code uses `#1a5632` on white. Submit page form uses green for selected states
 - Data model flipped from parallel arrays to structured submission objects.
 - New whitelists: `VALID_STAGES`, `VALID_DISCIPLINES`.
 - 5-field form → 4-field form (stage, discipline, wish, comfort_food).
-- `POST /api/submit` now runs two Anthropic calls in parallel and returns personalized output to each respondent (build plan + comfort-food startup pitch).
+- `POST /api/submit` returns instantly with a room snapshot; AI generation runs fire-and-forget for admin curation only — the respondent never sees AI output.
 - 9 display states → 6 (dropped portrait/frontier/clusters/meta_question/outlier/invitation; added `wish_wall`, `sample_build_plans`, `food_startups`).
-- 4 synthesis endpoints → 1 (just `wish-wall` dedup; per-respondent synthesis runs inline on submit).
+- 4 synthesis endpoints → 1 (just `wish-wall` dedup; per-respondent synthesis runs in the background after submit).
+- Stage 1 renamed `Skeptic` → `Novice` ("Skeptic" implied an attitude the workshop can't shift).
 - Two new curation endpoints + admin curation panels.
 - Palette swap to warm earthy (was minimal Babson green-only).
 - Branding copy dropped the Chatbot→Assistant→Agent→Colleague arc framing.
@@ -131,9 +132,10 @@ QR code uses `#1a5632` on white. Submit page form uses green for selected states
 ```
 server.js                  — Express server, all routes, synthesis logic
 test-data.js               — 50 pre-generated fake submissions
-public/submit.html         — Audience submission form (7 fields) + confirmation panel
-public/admin.html          — Presenter control panel (8 states, 3 syntheses, 2 curation panels)
-public/display.html        — Projector display (8 states, full-screen)
+public/submit.html         — Audience submission form (4 fields) + canned confirmation
+public/admin.html          — Presenter control panel (6 states, 1 synthesis, 2 curation panels)
+public/display.html        — Projector display (6 states, full-screen)
 render.yaml                — Render deployment blueprint (service not yet connected)
+CHECKLIST.md               — Pre-workshop verification walkthrough
 .env                       — API key + PIN (gitignored)
 ```

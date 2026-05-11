@@ -3,6 +3,8 @@
 **Workshop:** Tuesday May 12, 2026 · 3:30–5:00 PM
 **App lives at:** `~/Projects/see-vibecoding-app/`
 **Repo:** https://github.com/jonsims/see-vibecoding-app
+**Production URL:** https://see-vibecoding-app.onrender.com (Render Starter plan — no spin-down)
+**Render service ID:** `srv-d80slqvaqgkc73adn3e0`
 
 Work through Sections A–F to verify everything works. Section G is open decisions you still need to make. Section H is day-of setup.
 
@@ -123,31 +125,23 @@ When you're ready to accept real submissions, in **Danger zone**:
 
 ## G. Open decisions (NOT verification — things you still need to do)
 
-### G1. How will registrants reach the form?
+### G1. Registrant URL — DONE ✓
 
-The app is currently local-only. `http://192.168.4.22:3011` only works on your home Wi-Fi. Registrants need a public URL. Three options:
+Deployed to Render Starter plan (no spin-down).
 
-- **Render deploy** (recommended, set up but not connected)
-  1. Push is already done — the repo is at https://github.com/jonsims/see-vibecoding-app
-  2. In Render dashboard, create new web service from that repo
-  3. Add two env vars manually: `ANTHROPIC_API_KEY` (copy from `.env`) and `ADMIN_PIN`
-  4. Deploy — it'll be at `https://see-vibecoding-app.onrender.com`
-- **Cloudflare tunnel** for the day (free, no signup, ephemeral URL):
-  ```bash
-  cloudflared tunnel --url http://localhost:3011 --no-autoupdate
-  ```
-  Share whatever URL it prints. Caveat: the tunnel dies when you close the laptop.
-- **Run on the NAS** — bigger lift, probably not worth it for one event.
+**Public URL:** https://see-vibecoding-app.onrender.com/submit
+**Admin URL:** https://see-vibecoding-app.onrender.com/admin (PIN: `1234`)
+**Display URL:** https://see-vibecoding-app.onrender.com/display
+**Dashboard:** https://dashboard.render.com/web/srv-d80slqvaqgkc73adn3e0
 
-- [ ] Decision made: __________________________
+Auto-deploys on push to `main`. Env vars `ANTHROPIC_API_KEY`, `ADMIN_PIN`, `NODE_VERSION=22` are set in Render. Production smoke test passed (form submit, admin auth, load test data, wipe).
 
 ### G2. Email the link to registrants
 
-Per the original PRD timeline, this was supposed to go out Saturday May 9. Time is tight — registrants need at least a few hours to fill out the form before Tuesday 3:30.
+- [ ] Email sent (form URL: https://see-vibecoding-app.onrender.com/submit)
+- [ ] Confirm send method (Canvas / email / both)
 
-- [ ] Decided send method (Canvas / email / both)
-- [ ] Public URL inserted into the message
-- [ ] Email sent
+Workshop is Tue 3:30 PM — registrants need at least a few hours.
 
 ### G3. (Optional) HTTPS via Caddy
 
@@ -165,9 +159,9 @@ This is purely cosmetic — `http://localhost:3011` works without it.
 
 ## H. Tuesday — day-of setup
 
-- [ ] Verify the public URL (from G1) still works — submit one test entry from your phone
-- [ ] If the test entry stuck around in production: admin → **Danger zone → "Wipe & start next session"** to clear stale data before audience arrives
-- [ ] On the presentation laptop: open `/admin` in one browser tab, `/display` in a second tab (drag the display tab to the projector / second screen, fullscreen it with `Cmd+Ctrl+F` in Safari or `Ctrl+Cmd+F` in Chrome)
+- [ ] Verify production is responsive: open https://see-vibecoding-app.onrender.com/submit on your phone
+- [ ] Wipe stale data: admin → **Danger zone → "Wipe & start next session"** to clear any test submissions before audience arrives (especially if you submitted real ones for testing during prep)
+- [ ] On the presentation laptop: open https://see-vibecoding-app.onrender.com/admin in one browser tab, https://see-vibecoding-app.onrender.com/display in a second tab (drag the display tab to the projector / second screen, fullscreen it with `Cmd+Ctrl+F` in Safari or `Ctrl+Cmd+F` in Chrome)
 - [ ] Test the PIN entry on the actual presentation laptop
 - [ ] Plan your cold-open sequence — likely cycle:
   1. `collection` (during pre-class intro, while the last stragglers submit)
@@ -183,10 +177,13 @@ This is purely cosmetic — `http://localhost:3011` works without it.
 
 | Thing | Where |
 | --- | --- |
-| Submit form | http://localhost:3011/submit |
-| Admin | http://localhost:3011/admin (PIN: `1234`) |
-| Display | http://localhost:3011/display |
-| LAN access (phone) | http://192.168.4.22:3011/submit |
+| **Submit form (production)** | **https://see-vibecoding-app.onrender.com/submit** |
+| **Admin (production)** | **https://see-vibecoding-app.onrender.com/admin** (PIN: `1234`) |
+| **Display (production)** | **https://see-vibecoding-app.onrender.com/display** |
+| Render dashboard | https://dashboard.render.com/web/srv-d80slqvaqgkc73adn3e0 |
+| Render logs | `render logs --resources srv-d80slqvaqgkc73adn3e0 --output text` |
+| Local submit | http://localhost:3011/submit |
+| Local admin | http://localhost:3011/admin |
+| Local display | http://localhost:3011/display |
 | Code | `~/Projects/see-vibecoding-app/` |
-| Logs (if running in background) | `/tmp/see-vibe.log` |
 | Repo | https://github.com/jonsims/see-vibecoding-app |
