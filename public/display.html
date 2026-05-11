@@ -58,7 +58,7 @@
     }
     .collection-label { font-size: 2.2rem; color: var(--muted); margin-top: 1vh; }
     .qr-block { display: flex; flex-direction: column; align-items: center; gap: 2vh; }
-    .qr-block img, .qr-block svg { width: 320px; height: 320px; background: white; padding: 16px; border-radius: 14px; }
+    .qr-block img, .qr-block svg { width: min(28vw, 480px); height: min(28vw, 480px); background: white; padding: 18px; border-radius: 14px; }
     .qr-block .url { font-size: 1.4rem; color: var(--green-dark); font-weight: 600; }
 
     /* Charts */
@@ -66,11 +66,11 @@
       display: flex; flex-direction: column; gap: 2vh; max-width: 80vw;
     }
     .chart-row { display: flex; align-items: center; gap: 1.5vw; font-size: 1.8rem; }
-    .chart-label { width: 22vw; font-weight: 600; color: var(--green-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chart-label { width: 28vw; font-weight: 600; color: var(--green-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .chart-track { flex: 1; background: white; border: 1px solid #d8d2c0; border-radius: 8px; height: 4vh; overflow: hidden; }
     .chart-fill {
       background: linear-gradient(90deg, var(--green), var(--teal));
-      height: 100%; border-radius: 7px 0 0 7px; transition: width 0.6s ease;
+      height: 100%; border-radius: 7px; transition: width 0.6s ease;
       min-width: 4px;
     }
     .chart-count { width: 5vw; text-align: right; font-weight: 700; color: var(--green); font-size: 2rem; }

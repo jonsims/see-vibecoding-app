@@ -91,6 +91,7 @@
     .curation-controls { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
     .curation-selected-count { font-size: 0.8rem; color: var(--muted); }
 
+    .tools-btns { display: flex; gap: 10px; flex-wrap: wrap; }
     .danger-zone { border: 1px solid #e6c3bf; background: var(--warn-tint); border-radius: 10px; padding: 14px; }
     .danger-zone h3 { font-size: 0.75rem; text-transform: uppercase; color: var(--warn); letter-spacing: 0.08em; margin-bottom: 10px; }
     .danger-btns { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -195,16 +196,24 @@
     </div>
 
     <div class="panel full-col">
+      <h2>Recovery + tools</h2>
+      <p class="panel-desc">Use these if something looks off. Re-run AI generation for any submission that's missing a build plan or startup pitch (e.g., if Anthropic flaked during collection). Load test data only when you're rehearsing — it wipes real submissions first.</p>
+      <div class="tools-btns">
+        <button class="btn btn-teal" onclick="regenerateMissing()">Re-run missing AI generation</button>
+        <button class="btn btn-gray" onclick="loadTestData()">Load 50 fake submissions (rehearsal)</button>
+      </div>
+    </div>
+
+    <div class="panel full-col">
       <div class="danger-zone">
         <h3>Danger zone</h3>
         <div class="danger-btns">
-          <button class="btn btn-red" onclick="loadTestData()">Load 50 fake submissions</button>
           <button class="btn btn-red" onclick="showNextSessionConfirm()">Wipe & start next session</button>
         </div>
         <div class="next-session-confirm" id="next-session-confirm">
           <p>This will permanently delete all submissions, generated build plans, food pitches, and synthesis results. Are you sure?</p>
-          <button class="btn btn-red" onclick="confirmNextSession()">Yes, wipe everything</button>
           <button class="btn btn-gray" onclick="hideNextSessionConfirm()">Cancel</button>
+          <button class="btn btn-red" onclick="confirmNextSession()">Yes, wipe everything</button>
         </div>
       </div>
     </div>
@@ -307,7 +316,8 @@ function render(d) {
   document.getElementById('stat-build').textContent = subs.filter(s => s.buildPlan).length;
   document.getElementById('stat-food').textContent = subs.filter(s => s.startupPitch).length;
 
-  document.getElementById('current-state').textContent = d.displayState || 'collection';
+  const stateLabel = (DISPLAY_STATES.find(([s]) => s === d.displayState) || [null, d.displayState || 'collection'])[1];
+  document.getElementById('current-state').textContent = stateLabel;
   document.querySelectorAll('.display-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.state === d.displayState);
   });
@@ -445,7 +455,7 @@ async function saveCuration(endpoint) {
 }
 
 async function loadTestData() {
-  if (!confirm('This will wipe current state and load 50 fake submissions. Continue?')) return;
+  if (!confirm('This will WIPE all real submissions and load 50 fake ones. Only do this during rehearsal. Continue?')) return;
   await fetch('/api/admin/load-test-data', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-admin-pin': PIN },
@@ -454,6 +464,24 @@ async function loadTestData() {
   selectedFoodStartupIds.clear();
   curationHydrated = false;
   refresh();
+}
+
+async function regenerateMissing() {
+  try {
+    const r = await fetch('/api/admin/regenerate-missing', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-pin': PIN },
+    });
+    const data = await r.json();
+    if (r.ok) {
+      alert(`Queued AI regeneration for ${data.queued} submission${data.queued === 1 ? '' : 's'}. Check back in 10–20 seconds.`);
+    } else {
+      alert(`Regenerate failed: ${data.error || 'unknown'}`);
+    }
+    refresh();
+  } catch (e) {
+    alert('Regenerate failed: ' + e.message);
+  }
 }
 
 function showNextSessionConfirm() { document.getElementById('next-session-confirm').style.display = 'block'; }
