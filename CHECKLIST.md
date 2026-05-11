@@ -3,8 +3,13 @@
 **Workshop:** Tuesday May 12, 2026 · 3:30–5:00 PM
 **App lives at:** `~/Projects/see-vibecoding-app/`
 **Repo:** https://github.com/jonsims/see-vibecoding-app
-**Production URL:** https://see-vibecoding-app.onrender.com (Render Starter plan — no spin-down)
+**Production URL:** https://see-vibecoding-app.onrender.com
 **Render service ID:** `srv-d80slqvaqgkc73adn3e0`
+**Plan:** Standard ($25/mo, zero-downtime deploys, more CPU/RAM — downgrade after Tuesday)
+**Persistent disk:** 1 GB at `/data` (mountPath: `dsk-d80um68g4nts7390lorg`) — submissions survive restarts
+**Auto-deploy:** **OFF** (re-enable from Render dashboard after Wednesday)
+**Health endpoint:** https://see-vibecoding-app.onrender.com/healthz
+**Rate-limited:** `/api/submit` 10/min/IP, `/api/admin/*` 60/min/IP
 
 Work through Sections A–F to verify everything works. Section G is open decisions you still need to make. Section H is day-of setup.
 
@@ -143,7 +148,17 @@ Auto-deploys on push to `main`. Env vars `ANTHROPIC_API_KEY`, `ADMIN_PIN`, `NODE
 
 Workshop is Tue 3:30 PM — registrants need at least a few hours.
 
-### G3. (Optional) HTTPS via Caddy
+### G3. (One-time, takes 30 seconds) Turn on Render email alerts
+
+The per-service alert toggle isn't exposed via API. To get an email if the service ever fails to start or goes unhealthy during the workshop window:
+
+1. https://dashboard.render.com/web/srv-d80slqvaqgkc73adn3e0/settings
+2. Scroll to **Notifications**
+3. Toggle on: "Deploy failed" + "Service unhealthy"
+
+- [ ] Done (optional but recommended)
+
+### G4. (Optional) HTTPS via Caddy
 
 The Caddy config + entry in the Caddyfile is already in place. To make `https://local.see-vibecoding-app` actually resolve, run once:
 
