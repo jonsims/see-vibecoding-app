@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SEE Vibecoding — Cold Open</title>
+  <style>
+    :root {
+      --green: #1a5632;
+      --green-dark: #134323;
+      --green-tint: #e9f1eb;
+      --teal: #0d7377;
+      --cream: #F5EFE0;
+      --ink: #1A1A1A;
+      --muted: #5d5d5d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--cream); color: var(--ink); overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .stage {
+      width: 100vw; min-height: 100vh; padding: 4vh 5vw;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .eyebrow {
+      font-size: 1.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em;
+      color: var(--teal); margin-bottom: 1.6vh;
+    }
+    .headline {
+      font-size: 3.4rem; font-weight: 800; color: var(--green-dark);
+      line-height: 1.1; letter-spacing: -0.01em;
+    }
+    .subhead {
+      font-size: 1.7rem; color: var(--muted); margin-top: 2vh; line-height: 1.4;
+    }
+    .footer-tag {
+      position: fixed; bottom: 1.6vh; right: 2vw;
+      font-size: 0.95rem; color: var(--muted); opacity: 0.7;
+    }
+    .conn-dot {
+      position: fixed; bottom: 1.6vh; left: 2vw; width: 10px; height: 10px;
+      border-radius: 50%; background: var(--green); opacity: 0.6;
+    }
+    .conn-dot.offline { background: #b03a2e; }
+
+    /* Collection state */
+    .collection {
+      display: flex; align-items: center; justify-content: center;
+      gap: 6vw; flex-wrap: wrap;
+    }
+    .collection-num {
+      font-size: 14rem; font-weight: 800; color: var(--green); line-height: 1;
+      letter-spacing: -0.03em;
+    }
+    .collection-label { font-size: 2.2rem; color: var(--muted); margin-top: 1vh; }
+    .qr-block { display: flex; flex-direction: column; align-items: center; gap: 2vh; }
+    .qr-block img, .qr-block svg { width: 320px; height: 320px; background: white; padding: 16px; border-radius: 14px; }
+    .qr-block .url { font-size: 1.4rem; color: var(--green-dark); font-weight: 600; }
+
+    /* Charts */
+    .chart {
+      display: flex; flex-direction: column; gap: 2vh; max-width: 80vw;
+    }
+    .chart-row { display: flex; align-items: center; gap: 1.5vw; font-size: 1.8rem; }
+    .chart-label { width: 22vw; font-weight: 600; color: var(--green-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chart-track { flex: 1; background: white; border: 1px solid #d8d2c0; border-radius: 8px; height: 4vh; overflow: hidden; }
+    .chart-fill {
+      background: linear-gradient(90deg, var(--green), var(--teal));
+      height: 100%; border-radius: 7px 0 0 7px; transition: width 0.6s ease;
+      min-width: 4px;
+    }
+    .chart-count { width: 5vw; text-align: right; font-weight: 700; color: var(--green); font-size: 2rem; }
+
+    /* Portrait */
+    .portrait-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2vw; margin-top: 3vh;
+    }
+    .portrait-card {
+      background: white; border: 2px solid var(--green-tint); border-radius: 16px;
+      padding: 3vh 2vw; min-height: 28vh;
+    }
+    .portrait-card .frame-label {
+      font-size: 1rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.18em; color: var(--teal); margin-bottom: 1.6vh;
+    }
+    .portrait-card .frame-body { font-size: 1.6rem; line-height: 1.45; color: var(--ink); }
+    .portrait-closing {
+      font-size: 2.2rem; font-style: italic; color: var(--green-dark);
+      text-align: center; margin-top: 4vh; max-width: 80vw; margin-left: auto; margin-right: auto;
+      line-height: 1.4;
+    }
+
+    /* Wish wall */
+    .wish-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 2vh 3vw;
+      max-width: 92vw; margin: 2vh auto 0;
+    }
+    .wish-item {
+      background: white; border-left: 6px solid var(--teal); padding: 2vh 2vw;
+      border-radius: 0 10px 10px 0; font-size: 1.6rem; line-height: 1.4; color: var(--ink);
+      display: flex; align-items: flex-start; gap: 1vw;
+    }
+    .wish-theme {
+      display: inline-block; background: var(--teal); color: white;
+      font-size: 0.85rem; padding: 0.3vh 1vw; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: 0.08em; flex-shrink: 0; margin-top: 0.4vh;
+    }
+    .wish-text { flex: 1; }
+
+    /* Meta question */
+    .meta-clusters {
+      display: flex; gap: 1.5vw; margin-top: 2vh; flex-wrap: wrap; justify-content: center;
+    }
+    .meta-cluster {
+      background: white; border: 1px solid var(--green-tint); border-radius: 10px;
+      padding: 1.5vh 1.6vw; font-size: 1.2rem; color: var(--muted);
+    }
+    .meta-cluster strong { color: var(--green); font-size: 1.4rem; }
+    .meta-question-text {
+      font-size: 3rem; font-weight: 700; color: var(--green-dark);
+      line-height: 1.25; text-align: center; max-width: 80vw; margin: 4vh auto 2vh;
+    }
+    .meta-rationale { font-size: 1.4rem; color: var(--muted); text-align: center; max-width: 70vw; margin: 0 auto; font-style: italic; }
+    .meta-outlier {
+      margin-top: 4vh; background: white; padding: 2vh 2vw; border-radius: 12px;
+      border-left: 6px solid var(--teal); max-width: 80vw; margin-left: auto; margin-right: auto;
+    }
+    .meta-outlier .label { font-size: 0.9rem; font-weight: 700; color: var(--teal); text-transform: uppercase; letter-spacing: 0.12em; }
+    .meta-outlier .text { font-size: 1.7rem; color: var(--ink); margin-top: 1vh; line-height: 1.35; }
+
+    /* Sample build plans */
+    .plans-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 2vh 2vw; max-width: 92vw; margin: 2vh auto 0;
+    }
+    .plan-card {
+      background: white; border-radius: 12px; padding: 2.5vh 2vw;
+      border-top: 6px solid var(--green); display: flex; flex-direction: column; gap: 1.2vh;
+    }
+    .plan-card .stage-tag {
+      align-self: flex-start; background: var(--teal); color: white;
+      font-size: 0.85rem; padding: 0.3vh 1vw; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .plan-line {
+      font-size: 1.45rem; line-height: 1.35; color: var(--ink);
+      display: flex; gap: 0.8vw;
+    }
+    .plan-line .num { color: var(--teal); font-weight: 700; }
+
+    /* Food startups */
+    .food-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 2vh 2vw; max-width: 92vw; margin: 2vh auto 0;
+    }
+    .food-card {
+      background: white; border-radius: 14px; padding: 2.5vh 2.2vw;
+      border-bottom: 8px solid #b18b1f;
+      display: flex; flex-direction: column; gap: 1vh;
+    }
+    .food-name { font-size: 2.2rem; font-weight: 800; color: var(--green-dark); line-height: 1; }
+    .food-tagline { font-size: 1.4rem; font-style: italic; color: var(--teal); }
+    .food-pitch { font-size: 1.25rem; line-height: 1.45; color: var(--ink); margin-top: 0.6vh; }
+
+    .empty {
+      text-align: center; color: var(--muted); font-size: 1.8rem;
+    }
+
+    /* Big small screens: scale down chart-only and food-only states gracefully */
+    @media (max-aspect-ratio: 4/3) {
+      .portrait-grid { grid-template-columns: 1fr; }
+      .wish-grid { grid-template-columns: 1fr; }
+      .plans-grid { grid-template-columns: 1fr; }
+      .food-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <div class="eyebrow">Loading…</div>
+</div>
+<div class="conn-dot" id="conn-dot"></div>
+<div class="footer-tag">Jonathan Sims · Babson College · May 12, 2026</div>
+
+<script>
+let pollInFlight = false;
+let lastState = null;
+let qrCache = null;
+
+const $stage = document.getElementById('stage');
+const $conn = document.getElementById('conn-dot');
+
+setInterval(poll, 2000);
+poll();
+
+async function poll() {
+  if (pollInFlight) return;
+  pollInFlight = true;
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), 5000);
+  try {
+    const r = await fetch('/api/state', { signal: controller.signal });
+    if (!r.ok) throw new Error('not ok');
+    const data = await r.json();
+    $conn.classList.remove('offline');
+    render(data);
+  } catch {
+    $conn.classList.add('offline');
+  } finally {
+    clearTimeout(t);
+    pollInFlight = false;
+  }
+}
+
+function render(d) {
+  const sig = JSON.stringify({ st: d.displayState, c: d.count,
+    s: d.stageDistribution, dd: d.disciplineDistribution,
+    p: d.portraitResult, w: d.wishWallResult, m: d.metaQuestionResult,
+    bp: d.selectedBuildPlans, fs: d.selectedFoodStartups,
+  });
+  if (sig === lastState) return;
+  lastState = sig;
+
+  switch (d.displayState) {
+    case 'collection': return renderCollection(d);
+    case 'stage_chart': return renderChart('Stage of practice', d.stageDistribution);
+    case 'discipline_chart': return renderChart('Disciplines in the room', d.disciplineDistribution);
+    case 'portrait': return renderPortrait(d.portraitResult);
+    case 'wish_wall': return renderWishWall(d.wishWallResult, d.wishes);
+    case 'meta_question': return renderMetaQuestion(d.metaQuestionResult);
+    case 'sample_build_plans': return renderBuildPlans(d.selectedBuildPlans);
+    case 'food_startups': return renderFoodStartups(d.selectedFoodStartups);
+    default: return renderCollection(d);
+  }
+}
+
+function renderCollection(d) {
+  const url = location.origin + '/submit';
+  $stage.innerHTML = `
+    <div class="eyebrow">Pre-class check-in</div>
+    <div class="collection">
+      <div style="text-align:center">
+        <div class="collection-num">${d.count || 0}</div>
+        <div class="collection-label">submissions so far</div>
+      </div>
+      <div class="qr-block">
+        <div id="qr-slot"></div>
+        <div class="url">${url}</div>
+      </div>
+    </div>
+  `;
+  loadQr(url);
+}
+
+async function loadQr(url) {
+  if (qrCache && qrCache.url === url) {
+    const slot = document.getElementById('qr-slot');
+    if (slot) slot.innerHTML = qrCache.svg;
+    return;
+  }
+  try {
+    const r = await fetch('/api/qr?url=' + encodeURIComponent(url));
+    const svg = await r.text();
+    qrCache = { url, svg };
+    const slot = document.getElementById('qr-slot');
+    if (slot) slot.innerHTML = svg;
+  } catch {}
+}
+
+function renderChart(title, dist) {
+  if (!dist || !dist.length) {
+    $stage.innerHTML = `<div class="eyebrow">${escapeHtml(title)}</div><div class="empty">No submissions yet.</div>`;
+    return;
+  }
+  const max = Math.max(...dist.map(d => d.count));
+  $stage.innerHTML = `
+    <div class="eyebrow">${escapeHtml(title)}</div>
+    <div class="headline" style="font-size:2.6rem;margin-bottom:3vh">Who's in the room</div>
+    <div class="chart">
+      ${dist.map(d => {
+        const pct = (d.count / max) * 100;
+        return `<div class="chart-row">
+          <div class="chart-label">${escapeHtml(d.label)}</div>
+          <div class="chart-track"><div class="chart-fill" style="width:${pct}%"></div></div>
+          <div class="chart-count">${d.count}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderPortrait(p) {
+  if (!p) {
+    $stage.innerHTML = `<div class="eyebrow">Portrait</div><div class="empty">Run "Portrait" from admin first.</div>`;
+    return;
+  }
+  $stage.innerHTML = `
+    <div class="eyebrow">Portrait of this room's practice</div>
+    <div class="portrait-grid">
+      ${frame('Practice', p.practice)}
+      ${frame('Appetite', p.appetite)}
+      ${frame('Edge', p.edge)}
+    </div>
+    ${p.closing ? `<div class="portrait-closing">"${escapeHtml(p.closing)}"</div>` : ''}
+  `;
+}
+
+function frame(label, body) {
+  return `<div class="portrait-card">
+    <div class="frame-label">${label}</div>
+    <div class="frame-body">${escapeHtml(body || '')}</div>
+  </div>`;
+}
+
+function renderWishWall(synth, rawWishes) {
+  // Prefer the synthesized (dedup'd) version; fall back to raw wishes
+  const items = synth && Array.isArray(synth.wishes) && synth.wishes.length
+    ? synth.wishes
+    : (rawWishes || []).map(text => ({ text, theme: '' }));
+
+  if (!items.length) {
+    $stage.innerHTML = `<div class="eyebrow">Wish wall</div><div class="empty">Run "Wish wall" from admin to dedup, or wait for raw wishes.</div>`;
+    return;
+  }
+  $stage.innerHTML = `
+    <div class="eyebrow">Wishes from the room</div>
+    <div class="wish-grid">
+      ${items.slice(0, 18).map(w => `
+        <div class="wish-item">
+          ${w.theme ? `<span class="wish-theme">${escapeHtml(w.theme)}</span>` : ''}
+          <div class="wish-text">${escapeHtml(w.text)}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderMetaQuestion(m) {
+  if (!m) {
+    $stage.innerHTML = `<div class="eyebrow">Meta-question</div><div class="empty">Run "Meta-question" from admin first.</div>`;
+    return;
+  }
+  $stage.innerHTML = `
+    <div class="eyebrow">The room's question, distilled</div>
+    <div class="meta-question-text">"${escapeHtml(m.meta_question || '')}"</div>
+    ${m.meta_question_rationale ? `<div class="meta-rationale">${escapeHtml(m.meta_question_rationale)}</div>` : ''}
+    <div class="meta-clusters">
+      ${(m.clusters || []).map(c => `<div class="meta-cluster"><strong>${c.count}</strong> · ${escapeHtml(c.label)}</div>`).join('')}
+    </div>
+    ${m.outlier_question ? `
+      <div class="meta-outlier">
+        <div class="label">Outlier worth naming</div>
+        <div class="text">${escapeHtml(m.outlier_question)}</div>
+      </div>
+    ` : ''}
+  `;
+}
+
+function renderBuildPlans(plans) {
+  if (!plans || !plans.length) {
+    $stage.innerHTML = `<div class="eyebrow">Sample build plans</div><div class="empty">Curate at least one in admin first.</div>`;
+    return;
+  }
+  $stage.innerHTML = `
+    <div class="eyebrow">What you're walking in already having vibe-coded</div>
+    <div class="plans-grid">
+      ${plans.slice(0, 8).map(p => `
+        <div class="plan-card">
+          <span class="stage-tag">${escapeHtml(p.stage || '')}</span>
+          <div class="plan-line"><span class="num">1.</span><span>${escapeHtml(p.line1 || '')}</span></div>
+          <div class="plan-line"><span class="num">2.</span><span>${escapeHtml(p.line2 || '')}</span></div>
+          <div class="plan-line"><span class="num">3.</span><span>${escapeHtml(p.line3 || '')}</span></div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderFoodStartups(pitches) {
+  if (!pitches || !pitches.length) {
+    $stage.innerHTML = `<div class="eyebrow">Food startups</div><div class="empty">Curate at least one in admin first.</div>`;
+    return;
+  }
+  $stage.innerHTML = `
+    <div class="eyebrow">Six pitches we somehow got from your comfort foods</div>
+    <div class="food-grid">
+      ${pitches.slice(0, 8).map(p => `
+        <div class="food-card">
+          <div class="food-name">${escapeHtml(p.name || '')}</div>
+          <div class="food-tagline">"${escapeHtml(p.tagline || '')}"</div>
+          <div class="food-pitch">${escapeHtml(p.pitch || '')}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+</script>
+</body>
+</html>

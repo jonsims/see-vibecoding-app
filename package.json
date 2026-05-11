@@ -1,0 +1,19 @@
+{
+  "name": "see-vibecoding-app",
+  "version": "1.0.0",
+  "description": "Pre-class form + cold-open display for the SEE Vibe Coding workshop at Babson's 55th Price-Babson SEE (May 12, 2026)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "qrcode": "^1.5.4"
+  }
+}
