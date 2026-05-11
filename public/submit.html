@@ -83,12 +83,28 @@
 
     .card {
       background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
-      padding: 24px 24px; margin-bottom: 18px; box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+      padding: 20px 22px; margin-bottom: 16px; box-shadow: 0 1px 0 rgba(0,0,0,0.02);
     }
-    .success-card p { font-size: 1.02rem; line-height: 1.55; color: var(--ink); margin-bottom: 14px; }
-    .success-card p:last-of-type { margin-bottom: 0; }
-    .success-card p strong { color: var(--green-dark); }
-    .success-card .see-you { font-size: 1.1rem; font-weight: 700; color: var(--green-dark); margin-top: 8px; }
+    .card .eyebrow {
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--teal); margin-bottom: 10px;
+    }
+    .room-count { font-size: 1.05rem; color: var(--ink); margin-bottom: 12px; line-height: 1.45; }
+    .room-count strong { color: var(--green-dark); }
+    .stage-bars { display: flex; flex-direction: column; gap: 6px; }
+    .stage-row { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; }
+    .stage-row .label { width: 78px; color: var(--muted); flex-shrink: 0; }
+    .stage-row .track { flex: 1; background: #ece6d3; height: 10px; border-radius: 3px; }
+    .stage-row .fill { background: var(--green); height: 10px; border-radius: 3px; min-width: 2px; transition: width 0.4s; }
+    .stage-row .count { width: 24px; text-align: right; color: var(--muted); font-size: 0.8rem; }
+
+    .prep-text { font-size: 1rem; line-height: 1.55; color: var(--ink); margin-bottom: 12px; }
+    .prep-text strong { color: var(--green-dark); }
+    .prep-link {
+      display: inline-block; color: var(--teal); font-weight: 600; text-decoration: none;
+      border-bottom: 1.5px solid var(--teal); font-size: 1rem;
+    }
+    .prep-link:active { opacity: 0.7; }
 
     .footer { text-align: center; color: var(--hint); font-size: 0.78rem; margin-top: 18px; }
   </style>
@@ -142,12 +158,16 @@
       <div class="check-text">You're in.</div>
     </div>
 
-    <div class="card success-card">
-      <p>By 5pm Tuesday, every person in the room will walk out with one working thing they built themselves — with their hands on a keyboard, using messy real data from their own teaching.</p>
-      <p>You don't have to write code. You don't have to know what an API is.</p>
-      <p><strong>The only prep:</strong> bring one annoying problem from your teaching life this term.</p>
-      <p>Skeptics will find where the tool earns its keep. Builders will steal each other's patterns. Everyone else will walk out with the first version of something they've been putting off.</p>
-      <p class="see-you">See you in the room.</p>
+    <div class="card">
+      <div class="eyebrow">The room so far</div>
+      <div class="room-count" id="room-count"></div>
+      <div class="stage-bars" id="stage-bars"></div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">One small thing before Tuesday</div>
+      <p class="prep-text">Make sure Claude is installed on the <strong>laptop</strong> you're bringing — not your phone. We'll be writing code with it.</p>
+      <a class="prep-link" href="https://claude.ai/download" target="_blank" rel="noopener">claude.ai/download &rarr;</a>
     </div>
 
     <div class="footer">Babson College · May 12, 2026</div>
@@ -234,7 +254,8 @@
           const data = await r.json().catch(() => ({}));
           throw new Error(data.error || 'Server error');
         }
-        showConfirmation();
+        const data = await r.json().catch(() => ({}));
+        showConfirmation(data);
       } catch (err) {
         if (err.name === 'AbortError') {
           showError('Slow connection — please try again.');
@@ -254,7 +275,24 @@
       }
     }
 
-    function showConfirmation() {
+    function showConfirmation(data) {
+      const count = (data && data.count) || 1;
+      const dist = (data && data.stageDistribution) || [];
+      const youSuffix = count === 1 ? '' : '';
+      document.getElementById('room-count').innerHTML = count === 1
+        ? `You're the first one in.`
+        : `You're <strong>#${count}</strong> in the room so far.`;
+
+      const max = dist.length ? Math.max(...dist.map(d => d.count)) : 1;
+      document.getElementById('stage-bars').innerHTML = dist.map(d => {
+        const pct = (d.count / max) * 100;
+        return `<div class="stage-row">
+          <span class="label">${escapeHtml(d.label)}</span>
+          <span class="track"><span class="fill" style="width:${pct}%"></span></span>
+          <span class="count">${d.count}</span>
+        </div>`;
+      }).join('');
+
       document.getElementById('form').style.display = 'none';
       document.getElementById('success').style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'instant' });

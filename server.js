@@ -253,7 +253,11 @@ app.post('/api/submit', (req, res) => {
     ts: Date.now(),
   };
   session.submissions.push(sub);
-  res.json({ ok: true });
+  res.json({
+    ok: true,
+    count: session.submissions.length,
+    stageDistribution: distribution(session.submissions.map(s => s.stage), VALID_STAGES),
+  });
 
   // Fire-and-forget — the respondent has their confirmation, generation
   // populates buildPlan + startupPitch in the background for admin curation.
