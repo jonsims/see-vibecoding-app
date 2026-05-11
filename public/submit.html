@@ -159,7 +159,7 @@
     </div>
 
     <div class="card">
-      <div class="eyebrow">The room so far</div>
+      <div class="eyebrow">Who's checked in so far</div>
       <div class="room-count" id="room-count"></div>
       <div class="stage-bars" id="stage-bars"></div>
     </div>
@@ -280,8 +280,8 @@
       const dist = (data && data.stageDistribution) || [];
       const youSuffix = count === 1 ? '' : '';
       document.getElementById('room-count').innerHTML = count === 1
-        ? `You're the first one in.`
-        : `You're <strong>#${count}</strong> in the room so far.`;
+        ? `You're the first to check in.`
+        : `You're <strong>#${count}</strong> to check in so far.`;
 
       const max = dist.length ? Math.max(...dist.map(d => d.count)) : 1;
       document.getElementById('stage-bars').innerHTML = dist.map(d => {
